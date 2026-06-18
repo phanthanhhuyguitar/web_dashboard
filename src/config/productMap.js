@@ -1,0 +1,9 @@
+export const PRODUCT_IDS = {
+  CONSUMER_LOAN: '64352',
+  MORTGAGE_OUTSTANDING: '64308',
+};
+
+export const PRODUCT_LABELS = {
+  [PRODUCT_IDS.CONSUMER_LOAN]: 'Vay tiêu dùng',
+  [PRODUCT_IDS.MORTGAGE_OUTSTANDING]: 'Dư nợ/BĐS',
+};

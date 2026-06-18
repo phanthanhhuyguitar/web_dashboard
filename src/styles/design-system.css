@@ -1,0 +1,92 @@
+:root {
+  --ds-color-primary: #2563eb;
+  --ds-color-primary-hover: #1d4ed8;
+  --ds-color-primary-soft: #eff6ff;
+  --ds-color-primary-border: #dbeafe;
+  --ds-color-text: #111827;
+  --ds-color-text-muted: #64748b;
+  --ds-color-border: #d8e2f0;
+  --ds-color-danger: #dc2626;
+  --ds-color-danger-hover: #b91c1c;
+  --ds-color-danger-soft: #fff1f2;
+  --ds-color-danger-soft-hover: #ffe4e6;
+  --ds-color-danger-border: #fecaca;
+  --ds-radius-control: 10px;
+  --ds-radius-icon: 8px;
+}
+
+.ds-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: var(--ds-radius-control);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ds-button-primary {
+  border: 1px solid var(--ds-color-primary);
+  background: var(--ds-color-primary);
+  color: #ffffff;
+}
+
+.ds-button-primary:hover:not(:disabled) {
+  border-color: var(--ds-color-primary-hover);
+  background: var(--ds-color-primary-hover);
+}
+
+.ds-button-secondary {
+  border: 1px solid var(--ds-color-border);
+  background: #ffffff;
+  color: #334155;
+}
+
+.ds-button-secondary:hover:not(:disabled) {
+  border-color: #bfdbfe;
+  background: var(--ds-color-primary-soft);
+  color: var(--ds-color-primary);
+}
+
+.ds-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.ds-icon-button {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--ds-radius-icon);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ds-icon-button-primary {
+  border: 1px solid var(--ds-color-primary-border);
+  background: var(--ds-color-primary-soft);
+  color: var(--ds-color-primary);
+}
+
+.ds-icon-button-primary:hover:not(:disabled) {
+  background: #dbeafe;
+}
+
+.ds-icon-button-danger {
+  border: 1px solid var(--ds-color-danger-border);
+  background: var(--ds-color-danger-soft);
+  color: var(--ds-color-danger);
+}
+
+.ds-icon-button-danger:hover:not(:disabled) {
+  background: var(--ds-color-danger-soft-hover);
+}
