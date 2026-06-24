@@ -1,0 +1,25 @@
+=== BAT DAU DONG BO CHI TIET DS USER ===
+JobId: sync_user_details_20260622_180938
+Input file: output/users/listUser_20260622_113910.txt
+Master file: output/users/list_user_detail_all.txt
+Total input: 100
+Already processed: 0
+Need sync: 100
+Concurrency: 1
+Delay: 500ms
+Timeout: 15000ms
+Max retries: 0
+[1/100] Worker 1 | success: 1 | failed: 0 | speed: 0.89 req/s
+[2/100] Worker 1 | success: 2 | failed: 0 | speed: 0.88 req/s
+[3/100] Worker 1 | success: 3 | failed: 0 | speed: 0.98 req/s
+[4/100] Worker 1 | success: 4 | failed: 0 | speed: 1.03 req/s
+[5/100] Worker 1 | success: 5 | failed: 0 | speed: 1.06 req/s
+[6/100] Worker 1 | success: 6 | failed: 0 | speed: 1.08 req/s
+[7/100] Worker 1 | success: 7 | failed: 0 | speed: 1.05 req/s
+[8/100] Worker 1 | success: 8 | failed: 0 | speed: 1.07 req/s
+[9/100] Worker 1 | success: 9 | failed: 0 | speed: 1.09 req/s
+[10/100] Worker 1 | success: 10 | failed: 0 | speed: 1.1 req/s
+=== YEU CAU HUY DONG BO ===
+
+=== DA HUY DONG BO ===
+Finished time: 2026-06-22T11:09:52.611Z

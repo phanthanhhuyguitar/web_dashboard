@@ -40,14 +40,6 @@ function validateForm(form, isCreateMode) {
   return nextErrors;
 }
 
-function getStatusClass(status) {
-  if (status === 'success') return 'notification-modal-message--success';
-  if (status === 'error') return 'notification-modal-message--error';
-  if (status === 'loading') return 'notification-modal-message--loading';
-
-  return '';
-}
-
 function getConfirmCopy(isCreateMode) {
   if (isCreateMode) {
     return {
@@ -72,8 +64,6 @@ function NotificationTemplateModal({
   onSubmit,
   open,
   submitting,
-  submitMessage,
-  submitStatus,
 }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
@@ -152,8 +142,6 @@ function NotificationTemplateModal({
     setIsConfirmOpen(false);
   };
 
-  const statusClass = getStatusClass(submitStatus);
-
   return (
     <div className="notification-modal-backdrop" role="presentation">
       <section className="notification-modal" role="dialog" aria-modal="true" aria-labelledby="notification-modal-title">
@@ -220,10 +208,6 @@ function NotificationTemplateModal({
             />
             {errors.bodyTemplate ? <small>{errors.bodyTemplate}</small> : null}
           </label>
-
-          {submitMessage ? (
-            <div className={`notification-modal-message ${statusClass}`.trim()}>{submitMessage}</div>
-          ) : null}
 
           <div className="notification-modal-actions">
             <button className="notification-secondary-button" type="button" onClick={onClose} disabled={submitting}>

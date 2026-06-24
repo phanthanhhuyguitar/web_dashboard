@@ -10,6 +10,14 @@ const axiosClient = axios.create({
   },
 });
 
+function getAppPath(path) {
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const normalizedPath = String(path || '').replace(/^\/+/, '');
+
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 axiosClient.interceptors.request.use((config) => {
   const token = getAccessToken();
 
@@ -28,8 +36,10 @@ axiosClient.interceptors.response.use(
     if (status === 401 || status === 403) {
       clearAccessToken();
 
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      const loginPath = getAppPath('/login');
+
+      if (window.location.pathname !== loginPath) {
+        window.location.href = loginPath;
       }
     }
 

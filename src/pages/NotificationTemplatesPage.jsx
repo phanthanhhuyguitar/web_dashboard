@@ -135,9 +135,16 @@ function NotificationTemplatesPage() {
         onSubmit={handleModalSubmit}
         open={modalState.open}
         submitting={submitting}
-        submitMessage={submitMessage}
-        submitStatus={submitStatus}
       />
+
+      {submitMessage ? (
+        <div className={`notification-toast notification-toast-${submitStatus || 'loading'}`} role="status" aria-live="polite">
+          <span>{submitMessage}</span>
+          <button type="button" onClick={clearSubmitStatus} aria-label="Đóng thông báo">
+            ×
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

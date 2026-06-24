@@ -1,0 +1,18 @@
+=== BAT DAU DONG BO DS USER ===
+JobId: sync_users_20260622_113910
+Output file: output/users/listUser_20260622_113910.txt
+Latest file: output/users/listUser_latest.txt
+Start time: 2026-06-22T04:39:10.030Z
+
+Page 1 | HTTP 200 | users: 20 | totalWritten: 20 | progress: 0% | speed: 37.81 users/s
+Page 2 | HTTP 200 | users: 20 | totalWritten: 40 | progress: 0% | speed: 32.05 users/s
+Page 3 | HTTP 200 | users: 20 | totalWritten: 60 | progress: 0% | speed: 30.21 users/s
+=== TAM DUNG DONG BO ===
+=== TIEP TUC DONG BO ===
+Page 4 | HTTP 200 | users: 20 | totalWritten: 80 | progress: 0% | speed: 17.5 users/s
+=== TAM DUNG DONG BO ===
+Page 5 | HTTP 200 | users: 20 | totalWritten: 100 | progress: 0% | speed: 18.84 users/s
+=== YEU CAU HUY DONG BO ===
+
+=== DA HUY DONG BO ===
+Finished time: 2026-06-22T04:39:22.098Z

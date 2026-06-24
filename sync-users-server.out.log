@@ -1,0 +1,5 @@
+
+> dashboard-tnex-partner@0.1.0 sync-users-server
+> node server/syncUsersServer.cjs
+
+Sync users server listening on http://localhost:4174

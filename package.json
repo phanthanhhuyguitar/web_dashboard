@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "sync-users-server": "node server/syncUsersServer.cjs",
     "check:encoding": "node scripts/check-encoding.js",
     "build": "node scripts/check-encoding.js && vite build",
     "preview": "vite preview"

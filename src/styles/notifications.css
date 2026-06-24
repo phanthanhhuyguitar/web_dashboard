@@ -317,6 +317,58 @@
   color: #c2410c;
 }
 
+.notification-toast {
+  position: fixed;
+  top: 84px;
+  right: 28px;
+  z-index: 1200;
+  display: flex;
+  min-width: 300px;
+  max-width: min(420px, calc(100vw - 48px));
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 14px 14px 16px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.notification-toast-loading {
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+}
+
+.notification-toast-success {
+  border: 1px solid #86efac;
+  color: #047857;
+}
+
+.notification-toast-error {
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.notification-toast button {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.notification-toast button:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
 .notification-modal-actions {
   justify-content: flex-end;
 }
