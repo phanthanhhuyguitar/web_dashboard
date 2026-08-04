@@ -1,0 +1,327 @@
+:root {
+  --ds-color-primary: #2563eb;
+  --ds-color-primary-hover: #1d4ed8;
+  --ds-color-primary-soft: #eff6ff;
+  --ds-color-primary-border: #dbeafe;
+  --ds-color-text: #111827;
+  --ds-color-text-muted: #64748b;
+  --ds-color-border: #d8e2f0;
+  --ds-color-danger: #dc2626;
+  --ds-color-danger-hover: #b91c1c;
+  --ds-color-danger-soft: #fff1f2;
+  --ds-color-danger-soft-hover: #ffe4e6;
+  --ds-color-danger-border: #fecaca;
+  --ds-radius-control: 10px;
+  --ds-radius-icon: 8px;
+
+  /* Token nen/chu/border/shadow dung chung cho dark mode (Sidebar/Topbar + Dashboard) */
+  --ds-bg-page: #f5f7fb;
+  --ds-bg-surface: #ffffff;
+  --ds-bg-surface-alt: #f8fafc;
+  --ds-bg-hover-soft: #f2f6ff;
+  --ds-bg-topbar: rgba(255, 255, 255, 0.92);
+  --ds-text-primary: #111827;
+  --ds-text-body: #1f2937;
+  --ds-text-muted: #718096;
+  --ds-shadow-card: 0 16px 40px rgba(15, 23, 42, 0.08);
+  --ds-shadow-modal: 0 24px 70px rgba(15, 23, 42, 0.22);
+  --ds-modal-backdrop: rgba(15, 23, 42, 0.42);
+
+  /* Token chuyen dong dung chung - hover/transition/chuyen trang deu dung lai day de dong bo
+     toc do tren toan app, thay vi moi cho tu dat 1 kieu. */
+  --ds-duration-fast: 150ms;
+  --ds-duration-base: 220ms;
+  --ds-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root[data-theme='dark'] {
+  /* Den thuan (kieu VS Code dark), khong nga xanh - moi mau xam deu trung tinh (R=G=B). */
+  --ds-color-primary: #3b82f6;
+  --ds-color-primary-hover: #60a5fa;
+  --ds-color-primary-soft: #1c1c1c;
+  --ds-color-primary-border: #2e2e2e;
+  --ds-color-text: #e8e8e8;
+  --ds-color-text-muted: #9a9a9a;
+  --ds-color-border: #333333;
+  --ds-color-danger: #f87171;
+  --ds-color-danger-hover: #fca5a5;
+  --ds-color-danger-soft: #241a1a;
+  --ds-color-danger-soft-hover: #2e2020;
+  --ds-color-danger-border: #4a2e2e;
+
+  --ds-bg-page: #101010;
+  --ds-bg-surface: #1a1a1a;
+  --ds-bg-surface-alt: #222222;
+  --ds-bg-hover-soft: #2a2a2a;
+  --ds-bg-topbar: rgba(16, 16, 16, 0.92);
+  --ds-text-primary: #f0f0f0;
+  --ds-text-body: #d4d4d4;
+  --ds-text-muted: #9a9a9a;
+  --ds-shadow-card: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --ds-shadow-modal: 0 24px 70px rgba(0, 0, 0, 0.65);
+  --ds-modal-backdrop: rgba(0, 0, 0, 0.65);
+}
+
+.ds-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: var(--ds-radius-control);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ds-button-primary {
+  border: 1px solid var(--ds-color-primary);
+  background: var(--ds-color-primary);
+  color: #ffffff;
+}
+
+.ds-button-primary:hover:not(:disabled) {
+  border-color: var(--ds-color-primary-hover);
+  background: var(--ds-color-primary-hover);
+}
+
+.ds-button-secondary {
+  border: 1px solid var(--ds-color-border);
+  background: var(--ds-bg-surface);
+  color: var(--ds-text-body);
+}
+
+.ds-button-secondary:hover:not(:disabled) {
+  border-color: #bfdbfe;
+  background: var(--ds-color-primary-soft);
+  color: var(--ds-color-primary);
+}
+
+.ds-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.ds-icon-button {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  place-items: center;
+  padding: 0;
+  border-radius: var(--ds-radius-icon);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ds-icon-button-primary {
+  border: 1px solid var(--ds-color-primary-border);
+  background: var(--ds-color-primary-soft);
+  color: var(--ds-color-primary);
+}
+
+.ds-icon-button-primary:hover:not(:disabled) {
+  background: #dbeafe;
+}
+
+.ds-icon-button-danger {
+  border: 1px solid var(--ds-color-danger-border);
+  background: var(--ds-color-danger-soft);
+  color: var(--ds-color-danger);
+}
+
+.ds-icon-button-danger:hover:not(:disabled) {
+  background: var(--ds-color-danger-soft-hover);
+}
+
+/* ---- Hieu ung chung: hover/transition/chuyen canh trang ---- */
+
+/* Chi dung opacity (khong dung transform) - .dashboard-shell chua .dashboard-sidebar la
+   position: fixed, neu transform ancestor se tao containing block moi lam sidebar bi lech
+   vi tri trong luc chay animation. */
+@keyframes ds-page-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.dashboard-shell,
+.login-page {
+  animation: ds-page-fade-in var(--ds-duration-base) var(--ds-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-shell,
+  .login-page {
+    animation: none;
+  }
+}
+
+.ds-button,
+.ds-icon-button {
+  transition:
+    background-color var(--ds-duration-fast) var(--ds-ease),
+    border-color var(--ds-duration-fast) var(--ds-ease),
+    color var(--ds-duration-fast) var(--ds-ease),
+    box-shadow var(--ds-duration-fast) var(--ds-ease),
+    transform var(--ds-duration-fast) var(--ds-ease);
+}
+
+.ds-button-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.24);
+}
+
+.ds-button-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.ds-button-secondary:hover:not(:disabled),
+.ds-icon-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.ds-button-secondary:active:not(:disabled),
+.ds-icon-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Hover nhe cho moi bang du lieu trong app - dat specificity thap de cac rule rieng cua tung
+   trang (VD trang thai dang chon) van de dang de override khi can. */
+table tbody tr {
+  transition: background-color var(--ds-duration-fast) var(--ds-ease);
+}
+
+table tbody tr:hover {
+  background-color: var(--ds-bg-hover-soft);
+}
+
+/* ---- Hieu ung mo modal / dropdown ---- */
+
+@keyframes ds-modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ds-modal-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Backdrop cua moi modal trong app - liet ke ten class thay vi dung 1 class dung chung, vi cac
+   modal duoc them dan qua nhieu tinh nang khac nhau, khong dung chung 1 component goc. Modal moi
+   sau nay chi can dat ten ket thuc bang -backdrop/-modal roi them vao 2 danh sach nay. */
+.top-team-modal-backdrop,
+.org-modal-backdrop,
+.segment-modal-backdrop,
+.confirm-dialog-backdrop,
+.notification-modal-backdrop {
+  animation: ds-modal-backdrop-in var(--ds-duration-fast) var(--ds-ease);
+}
+
+.top-team-modal,
+.org-modal,
+.segment-modal,
+.confirm-dialog,
+.notification-modal {
+  animation: ds-modal-panel-in var(--ds-duration-base) var(--ds-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-team-modal-backdrop,
+  .org-modal-backdrop,
+  .segment-modal-backdrop,
+  .confirm-dialog-backdrop,
+  .notification-modal-backdrop,
+  .top-team-modal,
+  .org-modal,
+  .segment-modal,
+  .confirm-dialog,
+  .notification-modal {
+    animation: none;
+  }
+}
+
+/* Dropdown/menu bung ra (context menu, select tim kiem, bell...) - nhe va nhanh hon modal. */
+@keyframes ds-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.org-context-menu,
+.org-bulk-action-menu,
+.org-parent-options,
+.segment-sync-menu,
+.segment-searchable-select-options,
+.notification-bell-panel,
+.month-picker-popover {
+  animation: ds-popover-in var(--ds-duration-fast) var(--ds-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .org-context-menu,
+  .org-bulk-action-menu,
+  .org-parent-options,
+  .segment-sync-menu,
+  .segment-searchable-select-options,
+  .notification-bell-panel,
+  .month-picker-popover {
+    animation: none;
+  }
+}
+
+/* Toast goc phai tren - hien co 3 class dung chung toan app (segment-toast/org-toast/
+   notification-toast), truoc gio bung ra khong co hieu ung gi. */
+@keyframes ds-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.segment-toast,
+.org-toast,
+.notification-toast {
+  animation: ds-toast-in var(--ds-duration-base) var(--ds-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment-toast,
+  .org-toast,
+  .notification-toast {
+    animation: none;
+  }
+}

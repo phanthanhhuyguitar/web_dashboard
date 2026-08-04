@@ -1,0 +1,98 @@
+.recon-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.recon-month-picker .period-picker-wrap {
+  width: 100%;
+}
+
+.recon-month-picker .period-picker {
+  min-width: 0;
+  min-height: 42px;
+}
+
+.recon-month-picker .month-picker-header {
+  flex-wrap: nowrap;
+}
+
+.recon-month-picker .month-picker-header span {
+  flex: 1 1 auto;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.recon-month-picker .month-picker-header select {
+  width: auto;
+  min-height: 36px;
+  flex: 0 0 auto;
+}
+
+.recon-history-table td:nth-child(6),
+.recon-history-table td:nth-child(7) {
+  white-space: nowrap;
+}
+
+.recon-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.recon-status-created {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.recon-status-confirmed {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.recon-status-updated {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.recon-status-auto-confirmed {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.recon-status-default {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+@media (max-width: 720px) {
+  .recon-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+[data-theme='dark'] .recon-status-created,
+[data-theme='dark'] .recon-status-default {
+  background: #262626;
+  color: #b0b0b0;
+}
+
+[data-theme='dark'] .recon-status-confirmed {
+  background: #123625;
+  color: #34d399;
+}
+
+[data-theme='dark'] .recon-status-updated {
+  background: #16233f;
+  color: #60a5fa;
+}
+
+[data-theme='dark'] .recon-status-auto-confirmed {
+  background: #251c3f;
+  color: #a78bfa;
+}

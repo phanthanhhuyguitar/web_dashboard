@@ -1,0 +1,10 @@
+
+> dashboard-tnex-partner@0.1.0 dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  VITE v6.4.3  ready in 1041 ms
+
+  ➜  Local:   http://127.0.0.1:5173/
+11:35:43 AM [vite] (client) hmr update /src/pages/SegmentManagementPage.jsx
+6:04:57 PM [vite] (client) hmr update /src/styles/dashboard.css
