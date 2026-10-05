@@ -1,98 +1,5 @@
 import { getAccessToken } from '../utils/storage.js';
 
-const SEGMENT_STORAGE_KEY = 'tnex_notification_segments_v1';
-const MOCK_SEGMENTS = [
-  {
-    id: 'seg_001',
-    name: 'Danh sách ctv mở tài dưới 1 tháng',
-    description: '',
-    filters: {},
-    recipients: [],
-    userIds: [],
-    totalUsers: 790,
-    createdBy: 'nguyettn',
-    createdAt: '2026-12-20T12:12:30',
-    updatedAt: '2026-12-20T12:12:30',
-  },
-  {
-    id: 'seg_002',
-    name: 'Danh sách ctv không giới thiệu đơn vay nào',
-    description: '',
-    filters: {},
-    recipients: [],
-    userIds: [],
-    totalUsers: 1890,
-    createdBy: 'nguyettn',
-    createdAt: '2026-12-20T12:12:30',
-    updatedAt: '2026-12-20T12:12:30',
-  },
-  {
-    id: 'seg_003',
-    name: 'Danh sách ctv không giới thiệu đơn vay nào',
-    description: '',
-    filters: {},
-    recipients: [],
-    userIds: [],
-    totalUsers: 12,
-    createdBy: 'nguyettn',
-    createdAt: '2026-12-20T12:12:30',
-    updatedAt: '2026-12-20T12:12:30',
-  },
-  {
-    id: 'seg_004',
-    name: 'Danh sách ctv không giới thiệu đơn vay nào',
-    description: '',
-    filters: {},
-    recipients: [],
-    userIds: [],
-    totalUsers: 12,
-    createdBy: 'nguyettn',
-    createdAt: '2026-12-20T12:12:30',
-    updatedAt: '2026-12-20T12:12:30',
-  },
-  {
-    id: 'seg_005',
-    name: 'Danh sách ctv không giới thiệu đơn vay nào',
-    description: '',
-    filters: {},
-    recipients: [],
-    userIds: [],
-    totalUsers: 23,
-    createdBy: 'nguyettn',
-    createdAt: '2026-12-20T12:12:30',
-    updatedAt: '2026-12-20T12:12:30',
-  },
-];
-
-function canUseLocalStorage() {
-  return typeof window !== 'undefined' && Boolean(window.localStorage);
-}
-
-function readSegments() {
-  if (!canUseLocalStorage()) return [...MOCK_SEGMENTS];
-
-  const rawValue = window.localStorage.getItem(SEGMENT_STORAGE_KEY);
-
-  if (!rawValue) {
-    window.localStorage.setItem(SEGMENT_STORAGE_KEY, JSON.stringify(MOCK_SEGMENTS));
-    return [...MOCK_SEGMENTS];
-  }
-
-  const parsedValue = JSON.parse(rawValue);
-
-  return Array.isArray(parsedValue) ? parsedValue : [];
-}
-
-function writeSegments(segments) {
-  if (!canUseLocalStorage()) return;
-
-  window.localStorage.setItem(SEGMENT_STORAGE_KEY, JSON.stringify(segments));
-}
-
-function createSegmentId() {
-  return `seg_${Date.now().toString(36)}`;
-}
-
 async function requestJson(path, options = {}) {
   const token = getAccessToken();
   const headers = {
@@ -157,13 +64,19 @@ export function deleteSegment(id) {
 }
 
 export function searchSegments({ keyword = '', page = 1, size = 10 } = {}) {
-  const normalizedKeyword = String(keyword || '').trim().toLowerCase();
+  const normalizedKeyword = String(keyword || '')
+    .trim()
+    .toLowerCase();
   const currentPage = Math.max(Number(page) || 1, 1);
   const pageSize = Math.max(Number(size) || 10, 1);
 
   return getSegments().then((allSegments) => {
     const filteredSegments = normalizedKeyword
-      ? allSegments.filter((segment) => String(segment.name || '').toLowerCase().includes(normalizedKeyword))
+      ? allSegments.filter((segment) =>
+          String(segment.name || '')
+            .toLowerCase()
+            .includes(normalizedKeyword)
+        )
       : allSegments;
     const totalElements = filteredSegments.length;
     const totalPages = Math.max(Math.ceil(totalElements / pageSize), 1);
@@ -217,19 +130,6 @@ export function saveSegmentUsers(segmentId, filters = {}) {
     body: JSON.stringify({
       filters,
       mode: 'ALL_MATCHED_USERS',
-    }),
-  });
-}
-
-export async function getSegmentConversion({ segmentId, segmentUsers = [] }) {
-  return requestJson('/api/segments/conversion', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      segmentId,
-      segmentUsers,
     }),
   });
 }

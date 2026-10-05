@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import App from './App.jsx';
 import ErrorBoundary from './components/common/ErrorBoundary.jsx';
+import { AppSettingsProvider, readStoredSettings } from './context/AppSettingsContext.jsx';
 import { applyTheme } from './hooks/useTheme.js';
 import './styles/global.css';
 import './styles/login.css';
@@ -21,13 +22,15 @@ const routerBasename = import.meta.env.BASE_URL === '/'
   : import.meta.env.BASE_URL.replace(/\/$/, '');
 
 // Ap theme ngay truoc khi render de tranh nhay sang (FOUC) khi user da chon dark mode truoc do.
-applyTheme(window.localStorage.getItem('tnex-theme') === 'dark' ? 'dark' : 'light');
+applyTheme(readStoredSettings().theme);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
       <BrowserRouter basename={routerBasename}>
-        <App />
+        <AppSettingsProvider>
+          <App />
+        </AppSettingsProvider>
       </BrowserRouter>
     </ErrorBoundary>
   </React.StrictMode>

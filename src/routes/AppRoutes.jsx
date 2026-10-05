@@ -13,6 +13,7 @@ const ReconciliationHistoryPage = lazy(() => import('../pages/ReconciliationHist
 const SegmentManagementPage = lazy(() => import('../pages/SegmentManagementPage.jsx'));
 const SegmentDetailPage = lazy(() => import('../pages/SegmentDetailPage.jsx'));
 const SegmentUserConfigPage = lazy(() => import('../pages/SegmentUserConfigPage.jsx'));
+const SettingsPage = lazy(() => import('../pages/SettingsPage.jsx'));
 
 function AppRoutes() {
   return (
@@ -29,6 +30,7 @@ function AppRoutes() {
           <Route path="/segments/:segmentId/users" element={<SegmentUserConfigPage />} />
           <Route path="/reconciliations/history" element={<ReconciliationHistoryPage />} />
           <Route path="/data-quality" element={<DataQualityPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

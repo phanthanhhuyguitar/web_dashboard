@@ -2,9 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { fetchOrganizationUnits, fetchRoles } from '../api/orgUnitsApi.js';
+import ThemedSelect from '../components/common/ThemedSelect.jsx';
 import Sidebar from '../components/layout/Sidebar.jsx';
 import Topbar from '../components/layout/Topbar.jsx';
-import { createSegment, getSegmentById, saveSegmentUsers, searchSegmentUsers } from '../services/segmentLocalService.js';
+import {
+  createSegment,
+  getSegmentById,
+  saveSegmentUsers,
+  searchSegmentUsers,
+} from '../services/segmentLocalService.js';
 import { formatNumber } from '../utils/formatNumber.js';
 import { clearAccessToken } from '../utils/storage.js';
 
@@ -16,6 +22,7 @@ const DEFAULT_FILTERS = {
   role: 'ALL',
   organizationCode: 'ALL',
   saleId: '',
+  saleIdPrefix: 'ALL',
   revenueActivityFrom: '',
   revenueActivityTo: '',
   revenueActivityStatus: 'ALL',
@@ -142,7 +149,9 @@ function SegmentUserConfigPage() {
   const pendingSegment = location.state?.pendingSegment;
   const [segment, setSegment] = useState(() => {
     if (isNewSegment) {
-      return pendingSegment ? { id: null, name: pendingSegment.name, description: pendingSegment.description || '' } : null;
+      return pendingSegment
+        ? { id: null, name: pendingSegment.name, description: pendingSegment.description || '' }
+        : null;
     }
 
     return location.state?.segment || null;
@@ -197,23 +206,25 @@ function SegmentUserConfigPage() {
           return;
         }
 
-        setSegment((current) =>
-          current || {
-            id: segmentId,
-            name: location.state?.segmentName || segmentId,
-            description: '',
-          },
+        setSegment(
+          (current) =>
+            current || {
+              id: segmentId,
+              name: location.state?.segmentName || segmentId,
+              description: '',
+            }
         );
       })
       .catch(() => {
         if (cancelled) return;
 
-        setSegment((current) =>
-          current || {
-            id: segmentId,
-            name: location.state?.segmentName || segmentId,
-            description: '',
-          },
+        setSegment(
+          (current) =>
+            current || {
+              id: segmentId,
+              name: location.state?.segmentName || segmentId,
+              description: '',
+            }
         );
       });
 
@@ -224,7 +235,14 @@ function SegmentUserConfigPage() {
     return () => {
       cancelled = true;
     };
-  }, [isNewSegment, location.state?.segmentName, location.state?.toastMessage, navigate, pendingSegment?.name, segmentId]);
+  }, [
+    isNewSegment,
+    location.state?.segmentName,
+    location.state?.toastMessage,
+    navigate,
+    pendingSegment?.name,
+    segmentId,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -292,7 +310,7 @@ function SegmentUserConfigPage() {
   const showDisbursementColumn = Boolean(lastSearchMeta?.disbursementFilterApplied);
   const selectedOrganizationOption = useMemo(
     () => organizationOptions.find((option) => option.value === filters.organizationCode) || ALL_ORGANIZATION_OPTION,
-    [filters.organizationCode, organizationOptions],
+    [filters.organizationCode, organizationOptions]
   );
   const filteredOrganizationOptions = useMemo(() => {
     const searchText = normalizeSearchText(organizationSearch);
@@ -323,7 +341,11 @@ function SegmentUserConfigPage() {
       return 'Từ ngày tạo tài khoản không được lớn hơn Đến ngày tạo tài khoản.';
     }
 
-    if (filters.revenueActivityFrom && filters.revenueActivityTo && filters.revenueActivityFrom > filters.revenueActivityTo) {
+    if (
+      filters.revenueActivityFrom &&
+      filters.revenueActivityTo &&
+      filters.revenueActivityFrom > filters.revenueActivityTo
+    ) {
       return 'Từ ngày phát sinh doanh số không được lớn hơn Đến ngày phát sinh doanh số.';
     }
 
@@ -356,7 +378,7 @@ function SegmentUserConfigPage() {
           ...filters,
         },
         nextPage,
-        pageSize,
+        pageSize
       );
 
       setUsers(result.items || []);
@@ -472,16 +494,25 @@ function SegmentUserConfigPage() {
               <strong>Segment: {segment?.name || segmentId}</strong>
               {isNewSegment ? (
                 <p className="segment-config-pending-note">
-                  Segment này <strong>chưa được tạo</strong> - sẽ chỉ được tạo khi bạn tìm kiếm và bấm &quot;Lưu danh sách&quot;
-                  bên dưới. Rời trang mà chưa lưu sẽ không tạo ra segment nào.
+                  Segment này <strong>chưa được tạo</strong> - sẽ chỉ được tạo khi bạn tìm kiếm và bấm &quot;Lưu danh
+                  sách&quot; bên dưới. Rời trang mà chưa lưu sẽ không tạo ra segment nào.
                 </p>
               ) : null}
             </div>
             <div className="segment-config-actions">
-              <button className="segment-secondary-button ds-button ds-button-secondary" type="button" onClick={() => navigate('/segments')}>
+              <button
+                className="segment-secondary-button ds-button ds-button-secondary"
+                type="button"
+                onClick={() => navigate('/segments')}
+              >
                 Quay lại
               </button>
-              <button className="segment-primary-button ds-button ds-button-primary" type="button" onClick={handleSaveUsers} disabled={saving}>
+              <button
+                className="segment-primary-button ds-button ds-button-primary"
+                type="button"
+                onClick={handleSaveUsers}
+                disabled={saving}
+              >
                 {saving ? 'Đang lưu...' : isNewSegment ? 'Tạo segment & Lưu danh sách' : 'Lưu danh sách'}
               </button>
             </div>
@@ -499,136 +530,173 @@ function SegmentUserConfigPage() {
               <section className="segment-filter-section">
                 <h3>Tài khoản</h3>
                 <div className="segment-user-filter-grid segment-filter-section-grid segment-filter-account-grid">
-              <fieldset className="segment-fieldset">
-                <legend>Ngày tạo tài khoản</legend>
-                <label className="segment-field">
-                  <span>Từ ngày</span>
-                  <input type="date" value={filters.createdFrom} onChange={(event) => updateFilter('createdFrom', event.target.value)} />
-                </label>
-                <label className="segment-field">
-                  <span>Đến ngày</span>
-                  <input type="date" value={filters.createdTo} onChange={(event) => updateFilter('createdTo', event.target.value)} />
-                </label>
-              </fieldset>
+                  <fieldset className="segment-fieldset">
+                    <legend>Ngày tạo tài khoản</legend>
+                    <label className="segment-field">
+                      <span>Từ ngày</span>
+                      <input
+                        type="date"
+                        value={filters.createdFrom}
+                        onChange={(event) => updateFilter('createdFrom', event.target.value)}
+                      />
+                    </label>
+                    <label className="segment-field">
+                      <span>Đến ngày</span>
+                      <input
+                        type="date"
+                        value={filters.createdTo}
+                        onChange={(event) => updateFilter('createdTo', event.target.value)}
+                      />
+                    </label>
+                  </fieldset>
 
-              <label className="segment-field">
-                <span>Trạng thái ký hợp đồng</span>
-                <select value={filters.contractStatus} onChange={(event) => updateFilter('contractStatus', event.target.value)}>
-                  <option value="ALL">Tất cả</option>
-                  <option value="SIGNED">Đã ký hợp đồng</option>
-                  <option value="NOT_SIGNED">Chưa ký hợp đồng</option>
-                </select>
-              </label>
+                  <div className="segment-field-align-spacer">
+                    <span className="segment-field-spacer-legend" aria-hidden="true">
+                      &nbsp;
+                    </span>
+                    <label className="segment-field">
+                      <span>Trạng thái ký hợp đồng</span>
+                      <ThemedSelect
+                        value={filters.contractStatus}
+                        onChange={(event) => updateFilter('contractStatus', event.target.value)}
+                        options={[
+                          { value: 'ALL', label: 'Tất cả' },
+                          { value: 'SIGNED', label: 'Đã ký hợp đồng' },
+                          { value: 'NOT_SIGNED', label: 'Chưa ký hợp đồng' },
+                        ]}
+                      />
+                    </label>
+                  </div>
 
-              <label className="segment-field">
-                <span>Liên kết tài khoản TNEX</span>
-                <select value={filters.tnexLinkedStatus} onChange={(event) => updateFilter('tnexLinkedStatus', event.target.value)}>
-                  <option value="ALL">Tất cả</option>
-                  <option value="LINKED">Đã liên kết</option>
-                  <option value="NOT_LINKED">Chưa liên kết</option>
-                </select>
-              </label>
+                  <div className="segment-field-align-spacer">
+                    <span className="segment-field-spacer-legend" aria-hidden="true">
+                      &nbsp;
+                    </span>
+                    <label className="segment-field">
+                      <span>Liên kết tài khoản TNEX</span>
+                      <ThemedSelect
+                        value={filters.tnexLinkedStatus}
+                        onChange={(event) => updateFilter('tnexLinkedStatus', event.target.value)}
+                        options={[
+                          { value: 'ALL', label: 'Tất cả' },
+                          { value: 'LINKED', label: 'Đã liên kết' },
+                          { value: 'NOT_LINKED', label: 'Chưa liên kết' },
+                        ]}
+                      />
+                    </label>
+                  </div>
 
-              <label className="segment-field">
-                <span>Vai trò</span>
-                {/* Loc theo roleInfo.roleCode cua user (server: segmentUserSearch.cjs). Danh sach
+                  <label className="segment-field">
+                    <span>Vai trò</span>
+                    {/* Loc theo roleInfo.roleCode cua user (server: segmentUserSearch.cjs). Danh sach
                     lay dong tu API /admin/roles (fetchRoles) - xem buildRoleOptions/
                     getRoleFilterValue o dau file de biet cach anh xa gia tri. */}
-                <select
-                  value={filters.role}
-                  onChange={(event) => updateFilter('role', event.target.value)}
-                  disabled={rolesLoading}
-                >
-                  {roleOptions.map((option) => (
-                    <option value={option.value} key={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                    <ThemedSelect
+                      value={filters.role}
+                      onChange={(event) => updateFilter('role', event.target.value)}
+                      disabled={rolesLoading}
+                      options={roleOptions}
+                    />
+                  </label>
                 </div>
               </section>
 
               <section className="segment-filter-section">
                 <h3>Tổ chức</h3>
                 <div className="segment-filter-section-grid segment-filter-organization-grid">
-              <label className="segment-field">
-                <span>Tổ chức quản lý</span>
-                <div
-                  className="segment-searchable-select"
-                  onBlur={(event) => {
-                    if (!event.currentTarget.contains(event.relatedTarget)) {
-                      setOrganizationDropdownOpen(false);
-                      setOrganizationSearch('');
-                    }
-                  }}
-                >
-                  <button
-                    className="segment-searchable-select-trigger"
-                    type="button"
-                    onClick={() => {
-                      setOrganizationDropdownOpen((current) => {
-                        const nextOpen = !current;
-
-                        if (!nextOpen) {
+                  <label className="segment-field">
+                    <span>Tổ chức quản lý</span>
+                    <div
+                      className="segment-searchable-select"
+                      onBlur={(event) => {
+                        if (!event.currentTarget.contains(event.relatedTarget)) {
+                          setOrganizationDropdownOpen(false);
                           setOrganizationSearch('');
                         }
+                      }}
+                    >
+                      <button
+                        className="segment-searchable-select-trigger"
+                        type="button"
+                        onClick={() => {
+                          setOrganizationDropdownOpen((current) => {
+                            const nextOpen = !current;
 
-                        return nextOpen;
-                      });
-                    }}
-                    disabled={organizationsLoading}
-                    aria-expanded={organizationDropdownOpen}
-                    aria-haspopup="listbox"
-                  >
-                    {organizationsLoading ? 'Đang tải tổ chức...' : selectedOrganizationOption.label}
-                  </button>
-                  {organizationDropdownOpen && !organizationsLoading ? (
-                    <div className="segment-searchable-select-options" role="listbox">
-                      <div className="segment-searchable-select-search">
-                        <input
-                          value={organizationSearch}
-                          onChange={(event) => setOrganizationSearch(event.target.value)}
-                          placeholder="Tìm theo tên hoặc mã tổ chức"
-                          autoFocus
-                        />
-                      </div>
-                      {filteredOrganizationOptions.map((option) => (
-                        <button
-                          className={option.value === filters.organizationCode ? 'is-selected' : ''}
-                          type="button"
-                          role="option"
-                          aria-selected={option.value === filters.organizationCode}
-                          key={option.value}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => {
-                            updateFilter('organizationCode', option.value);
-                            setOrganizationDropdownOpen(false);
-                            setOrganizationSearch('');
-                          }}
-                        >
-                          <span>{option.label}</span>
-                          {option.value !== 'ALL' ? <small>{option.value}</small> : null}
-                        </button>
-                      ))}
-                      {filteredOrganizationOptions.length === 0 ? (
-                        <div className="segment-searchable-select-empty">Không tìm thấy tổ chức phù hợp</div>
+                            if (!nextOpen) {
+                              setOrganizationSearch('');
+                            }
+
+                            return nextOpen;
+                          });
+                        }}
+                        disabled={organizationsLoading}
+                        aria-expanded={organizationDropdownOpen}
+                        aria-haspopup="listbox"
+                      >
+                        {organizationsLoading ? 'Đang tải tổ chức...' : selectedOrganizationOption.label}
+                      </button>
+                      {organizationDropdownOpen && !organizationsLoading ? (
+                        <div className="segment-searchable-select-options" role="listbox">
+                          <div className="segment-searchable-select-search">
+                            <input
+                              value={organizationSearch}
+                              onChange={(event) => setOrganizationSearch(event.target.value)}
+                              placeholder="Tìm theo tên hoặc mã tổ chức"
+                              autoFocus
+                            />
+                          </div>
+                          {filteredOrganizationOptions.map((option) => (
+                            <button
+                              className={option.value === filters.organizationCode ? 'is-selected' : ''}
+                              type="button"
+                              role="option"
+                              aria-selected={option.value === filters.organizationCode}
+                              key={option.value}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => {
+                                updateFilter('organizationCode', option.value);
+                                setOrganizationDropdownOpen(false);
+                                setOrganizationSearch('');
+                              }}
+                            >
+                              <span>{option.label}</span>
+                              {option.value !== 'ALL' ? <small>{option.value}</small> : null}
+                            </button>
+                          ))}
+                          {filteredOrganizationOptions.length === 0 ? (
+                            <div className="segment-searchable-select-empty">Không tìm thấy tổ chức phù hợp</div>
+                          ) : null}
+                          {organizationsLoadFailed ? (
+                            <div className="segment-searchable-select-empty">Không tải được tổ chức</div>
+                          ) : null}
+                        </div>
                       ) : null}
-                      {organizationsLoadFailed ? <div className="segment-searchable-select-empty">Không tải được tổ chức</div> : null}
                     </div>
-                  ) : null}
-                </div>
-              </label>
+                  </label>
 
-              <label className="segment-field">
-                <span>Mã Sale (saleId)</span>
-                <input
-                  type="text"
-                  value={filters.saleId}
-                  onChange={(event) => updateFilter('saleId', event.target.value)}
-                  placeholder="Ví dụ: CTV1222 (không phân biệt hoa thường)"
-                />
-              </label>
+                  <label className="segment-field">
+                    <span>Mã Sale (saleId)</span>
+                    <input
+                      type="text"
+                      value={filters.saleId}
+                      onChange={(event) => updateFilter('saleId', event.target.value)}
+                      placeholder="Ví dụ: CTV1222 (không phân biệt hoa thường)"
+                    />
+                  </label>
+
+                  <label className="segment-field">
+                    <span>Loại mã (tiền tố)</span>
+                    <ThemedSelect
+                      value={filters.saleIdPrefix}
+                      onChange={(event) => updateFilter('saleIdPrefix', event.target.value)}
+                      options={[
+                        { value: 'ALL', label: 'Tất cả' },
+                        { value: 'CTV', label: 'CTV (mã đầu CTV)' },
+                        { value: 'DCH', label: 'DCH (mã đầu DCH)' },
+                        { value: 'NUMERIC', label: 'Chỉ số (không có tiền tố chữ)' },
+                      ]}
+                    />
+                  </label>
                 </div>
               </section>
 
@@ -638,11 +706,15 @@ function SegmentUserConfigPage() {
                   <div className="segment-revenue-activity-grid">
                     <label className="segment-field">
                       <span>Phát sinh doanh số</span>
-                      <select value={filters.revenueActivityStatus} onChange={(event) => updateFilter('revenueActivityStatus', event.target.value)}>
-                        <option value="ALL">Tất cả</option>
-                        <option value="HAS_REVENUE">Có phát sinh</option>
-                        <option value="NO_REVENUE">Chưa phát sinh</option>
-                      </select>
+                      <ThemedSelect
+                        value={filters.revenueActivityStatus}
+                        onChange={(event) => updateFilter('revenueActivityStatus', event.target.value)}
+                        options={[
+                          { value: 'ALL', label: 'Tất cả' },
+                          { value: 'HAS_REVENUE', label: 'Có phát sinh' },
+                          { value: 'NO_REVENUE', label: 'Chưa phát sinh' },
+                        ]}
+                      />
                     </label>
 
                     <label className="segment-field">
@@ -667,7 +739,11 @@ function SegmentUserConfigPage() {
                   <div className="segment-disbursement-grid">
                     <label className="segment-field">
                       <span>Tháng giải ngân</span>
-                      <input type="month" value={filters.disbursementMonth} onChange={(event) => updateFilter('disbursementMonth', event.target.value)} />
+                      <input
+                        type="month"
+                        value={filters.disbursementMonth}
+                        onChange={(event) => updateFilter('disbursementMonth', event.target.value)}
+                      />
                     </label>
                     <label className="segment-field">
                       <span>Doanh số tối thiểu</span>
@@ -695,10 +771,20 @@ function SegmentUserConfigPage() {
             {filterError ? <strong className="segment-field-error">{filterError}</strong> : null}
 
             <div className="segment-filter-actions">
-              <button className="segment-primary-button ds-button ds-button-primary" type="button" onClick={() => runSearch(1)} disabled={loading}>
+              <button
+                className="segment-primary-button ds-button ds-button-primary"
+                type="button"
+                onClick={() => runSearch(1)}
+                disabled={loading}
+              >
                 {loading ? 'Đang tìm...' : 'Tìm kiếm'}
               </button>
-              <button className="segment-secondary-button ds-button ds-button-secondary" type="button" onClick={resetFilters} disabled={loading}>
+              <button
+                className="segment-secondary-button ds-button ds-button-secondary"
+                type="button"
+                onClick={resetFilters}
+                disabled={loading}
+              >
                 Đặt lại
               </button>
             </div>
@@ -744,7 +830,9 @@ function SegmentUserConfigPage() {
                           <td>{(page - 1) * pageSize + index + 1}</td>
                           <td>{formatSaleIdDisplay(user.saleId) || '--'}</td>
                           <td>{user.userId || '--'}</td>
-                          {showDisbursementColumn ? <td>{formatNumber(Number(user.totalApprovedAmount) || 0)}</td> : null}
+                          {showDisbursementColumn ? (
+                            <td>{formatNumber(Number(user.totalApprovedAmount) || 0)}</td>
+                          ) : null}
                         </tr>
                       ))
                     : null}
@@ -755,7 +843,11 @@ function SegmentUserConfigPage() {
             <div className="segment-pagination">
               <span>{rangeText}</span>
               <div className="segment-page-buttons">
-                <button type="button" onClick={() => handlePageChange(page - 1)} disabled={page <= 1 || loading || !hasSearched}>
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page <= 1 || loading || !hasSearched}
+                >
                   ← Trước
                 </button>
                 {pages.map((item) =>
@@ -774,9 +866,13 @@ function SegmentUserConfigPage() {
                     <span className="segment-page-ellipsis" key={item}>
                       ...
                     </span>
-                  ),
+                  )
                 )}
-                <button type="button" onClick={() => handlePageChange(page + 1)} disabled={page >= totalPages || loading || !hasSearched}>
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page >= totalPages || loading || !hasSearched}
+                >
                   Sau →
                 </button>
               </div>
@@ -786,7 +882,11 @@ function SegmentUserConfigPage() {
       </div>
 
       {toastMessage?.text ? (
-        <div className={`segment-toast segment-toast-${toastMessage.type || 'success'}`} role="status" aria-live="polite">
+        <div
+          className={`segment-toast segment-toast-${toastMessage.type || 'success'}`}
+          role="status"
+          aria-live="polite"
+        >
           <span>{toastMessage.text}</span>
           <button type="button" onClick={() => setToastMessage(null)} aria-label="Đóng thông báo">
             x

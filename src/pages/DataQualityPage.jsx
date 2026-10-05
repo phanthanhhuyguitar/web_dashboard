@@ -14,6 +14,7 @@ import Topbar from '../components/layout/Topbar.jsx';
 import SyncProgressPanel from '../components/dataQuality/SyncProgressPanel.jsx';
 import SyncTriggerButton from '../components/dataQuality/SyncTriggerButton.jsx';
 import { DEFAULT_PAGE_SIZE } from '../config/constants.js';
+import { useAppSettings } from '../context/AppSettingsContext.jsx';
 import { useDataSyncPanel } from '../hooks/useDataSyncPanel.js';
 import { runDataQualityChecks } from '../services/dataQuality/dataQualityChecks.service.js';
 import { getSafeErrorMessage } from '../utils/error.js';
@@ -79,6 +80,7 @@ function DataQualityPage() {
   const location = useLocation();
   const focusCheckId = location.state?.focusCheckId;
   const syncPanel = useDataSyncPanel();
+  const { settings } = useAppSettings();
   const [checks, setChecks] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -105,6 +107,7 @@ function DataQualityPage() {
         users: usersResult.status === 'fulfilled' ? usersResult.value : [],
         teams: teamsResult.status === 'fulfilled' ? teamsResult.value : [],
         syncFreshness: freshnessResult.status === 'fulfilled' ? freshnessResult.value : null,
+        staleDays: settings.syncStaleDays,
       });
 
       setChecks(results);
@@ -115,7 +118,7 @@ function DataQualityPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [settings.syncStaleDays]);
 
   useEffect(() => {
     runChecks();
@@ -153,6 +156,11 @@ function DataQualityPage() {
   };
 
   const totalIssues = checks ? checks.reduce((sum, check) => sum + (check.severity !== 'info' ? check.count : 0), 0) : 0;
+  const reviewList = checks ? checks.filter((check) => check.severity !== 'info' && check.count > 0) : [];
+
+  const scrollToCheck = (checkId) => {
+    document.getElementById(`dq-check-${checkId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <div className="dashboard-shell">
@@ -195,9 +203,31 @@ function DataQualityPage() {
           {!loading && !error && checks && checks.length > 0 ? (
             <>
               <div className={`data-quality-summary${totalIssues > 0 ? ' has-issues' : ' is-clean'}`}>
-                {totalIssues > 0
-                  ? `Tổng cộng ${totalIssues.toLocaleString('vi-VN')} trường hợp cần xem lại.`
-                  : 'Không phát hiện bất thường đáng chú ý nào.'}
+                <p className="data-quality-summary-text">
+                  {totalIssues > 0
+                    ? `Tổng cộng ${totalIssues.toLocaleString('vi-VN')} trường hợp cần xem lại.`
+                    : 'Không phát hiện bất thường đáng chú ý nào.'}
+                </p>
+
+                {reviewList.length > 0 ? (
+                  <ul className="data-quality-summary-list">
+                    {reviewList.map((check) => (
+                      <li key={check.id}>
+                        <button
+                          className="data-quality-summary-list-item"
+                          type="button"
+                          onClick={() => scrollToCheck(check.id)}
+                        >
+                          <SeverityBadge severity={check.severity} />
+                          <span className="data-quality-summary-list-title">{check.title}</span>
+                          <strong className="data-quality-summary-list-count">
+                            {check.count.toLocaleString('vi-VN')}
+                          </strong>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </div>
 
               <div className="data-quality-list">

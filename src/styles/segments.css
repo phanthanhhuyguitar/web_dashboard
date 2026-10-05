@@ -448,7 +448,7 @@
 }
 
 .segment-filter-organization-grid {
-  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(200px, 1fr));
 }
 
 .segment-filter-revenue-grid {
@@ -477,6 +477,19 @@
   grid-column: 1 / -1;
   padding: 0;
   color: #334155;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+/* Bu chieu cao dong <legend> cua .segment-fieldset (vd "Ngay tao tai khoan") de cac field don
+   cung hang luoi (vd "Trang thai ky hop dong") co input thang hang voi field co fieldset. */
+.segment-field-align-spacer {
+  display: grid;
+  gap: 12px;
+}
+
+.segment-field-align-spacer .segment-field-spacer-legend {
+  visibility: hidden;
   font-size: 13px;
   font-weight: 750;
 }

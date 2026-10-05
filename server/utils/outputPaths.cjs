@@ -54,12 +54,13 @@ function getStaleRefreshDays() {
   return Number.isFinite(value) && value > 0 ? value : 7;
 }
 
-// Gioi han so record cu duoc refresh THEM vao moi lan sync (ngoai so record moi),
-// de tranh spam API khi lan dau bat tinh nang nay ma co qua nhieu record da cu.
+// Gioi han so record cu duoc refresh THEM vao moi lan sync (ngoai so record moi). Web nay chi
+// 1 nguoi dung nen nang gioi han len de bat kip du lieu cu nhanh hon (truoc la 100, de tranh
+// spam API khi lan dau bat tinh nang - gio khong con can thiet nua).
 function getStaleRefreshBatchLimit() {
   const value = Number(process.env.STALE_REFRESH_BATCH_LIMIT);
 
-  return Number.isFinite(value) && value > 0 ? value : 100;
+  return Number.isFinite(value) && value > 0 ? value : 1000;
 }
 
 module.exports = {

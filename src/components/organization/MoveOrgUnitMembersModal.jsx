@@ -9,6 +9,7 @@ import {
 } from '../../api/orgUnitsApi.js';
 import { reportOrgMoveEvent } from '../../api/notificationCenterApi.js';
 import ConfirmDialog from '../common/ConfirmDialog.jsx';
+import ThemedSelect from '../common/ThemedSelect.jsx';
 
 const SCOPE_OPTIONS = ['ALL', 'SELF', 'CHILDREN', 'OWN'];
 // Chi 2 luot goi API dong thoi - dung y het pattern "Xoa nguoi dung" da co san trong
@@ -421,21 +422,16 @@ function MoveOrgUnitMembersModal({ open, sourceOrgUnit, onClose, onSuccess, onTo
               <span>
                 Role <strong>*</strong>
               </span>
-              <select
+              <ThemedSelect
                 value={selectedRoleId}
+                options={roleOptions}
                 onChange={(event) => {
                   setSelectedRoleId(event.target.value);
                   setErrors((current) => ({ ...current, role: '' }));
                 }}
                 disabled={roleLoading || submitting}
-              >
-                <option value="">{roleLoading ? 'Đang tải role...' : 'Chọn role'}</option>
-                {roleOptions.map((role) => (
-                  <option value={role.value} key={role.value}>
-                    {role.label}
-                  </option>
-                ))}
-              </select>
+                placeholder={roleLoading ? 'Đang tải role...' : 'Chọn role'}
+              />
               {errors.role ? <strong className="add-org-user-error">{errors.role}</strong> : null}
             </label>
 
@@ -443,20 +439,15 @@ function MoveOrgUnitMembersModal({ open, sourceOrgUnit, onClose, onSuccess, onTo
               <span>
                 Scope <strong>*</strong>
               </span>
-              <select
+              <ThemedSelect
                 value={scope}
+                options={SCOPE_OPTIONS.map((option) => ({ value: option, label: option }))}
                 onChange={(event) => {
                   setScope(event.target.value);
                   setErrors((current) => ({ ...current, scope: '' }));
                 }}
                 disabled={submitting}
-              >
-                {SCOPE_OPTIONS.map((option) => (
-                  <option value={option} key={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+              />
               {errors.scope ? <strong className="add-org-user-error">{errors.scope}</strong> : null}
             </label>
           </div>

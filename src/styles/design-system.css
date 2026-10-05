@@ -165,6 +165,37 @@
   }
 }
 
+/* ---- Scrollbar dung chung theo theme - thay scrollbar mac dinh cua OS/trinh duyet, tu doi
+   mau theo light/dark vi dung lai token co san (khong can override rieng cho dark mode). ---- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ds-color-border) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: var(--ds-color-border);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ds-text-muted);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .ds-button,
 .ds-icon-button {
   transition:
@@ -203,6 +234,184 @@ table tbody tr {
 
 table tbody tr:hover {
   background-color: var(--ds-bg-hover-soft);
+}
+
+/* Focus mem cho toan bo input/select/textarea trong app - truoc gio border/box-shadow luc
+   focus bat len dot ngot vi tung trang tu dat rieng khong co transition. */
+input,
+select,
+textarea {
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease),
+    box-shadow var(--ds-duration-fast) var(--ds-ease);
+}
+
+/* ---- Loading spinner dung chung (LoadingState.jsx) ---- */
+
+@keyframes ds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ds-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--ds-color-primary-border);
+  border-top-color: var(--ds-color-primary);
+  border-radius: 50%;
+  animation: ds-spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-spinner {
+    animation: none;
+  }
+}
+
+/* State block (loading/empty/error) - fade nhe khi xuat hien, tranh cam giac "nhay" khi
+   chuyen tu trang thai nay sang trang thai khac. */
+.state-message {
+  animation: ds-page-fade-in var(--ds-duration-base) var(--ds-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-message {
+    animation: none;
+  }
+}
+
+/* ---- La phong roi (FallingLeaves.jsx) - lop trang tri toan app, khong chan click ---- */
+
+.falling-leaves-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  pointer-events: none;
+}
+
+/* ---- Nen "dien anh" (CinematicBackground.jsx) - nam duoi cung, cac card/sidebar/topbar van
+   nen dac binh thuong nen khong anh huong do de doc; chi thay o vung trong/gutter va qua lop
+   topbar kinh mo (backdrop-filter) da co san. .dashboard-shell/.login-page duoc chuyen sang
+   background: transparent de lop nay hien ra duoc. ---- */
+
+.cinematic-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Nen dac theo tong trang - luon co du tat hieu ung trang tri, tranh lo mau nen goc cua the
+     html (khong tu doi theo dark mode) qua lop scrim ban trong suot cua .dashboard-main. */
+  background: var(--ds-bg-page);
+}
+
+/* Khong dung filter: blur() nua - blur runtime tren 1 vung lon (~40vw) la phep tinh rat nang,
+   dac biet khi ca 3 quang deu dang animate cung luc, gay dơ/lac giao dien. Thay bang gradient
+   nhieu diem dung (nhat dan tu tam ra ngoai) de tao cam giac mem tuong tu nhung chi la 1 phep
+   ve gradient re, va transform o duoi chi ton chi phi composite (khong ve lai noi dung). */
+.cinematic-bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.26;
+  will-change: transform;
+}
+
+.cinematic-bg-blob-1 {
+  top: -12%;
+  left: -10%;
+  width: 42vw;
+  height: 42vw;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.9) 0%, rgba(37, 99, 235, 0.45) 30%, rgba(37, 99, 235, 0.12) 55%, transparent 78%);
+  animation: cinematic-drift-1 28s var(--ds-ease) infinite alternate;
+}
+
+.cinematic-bg-blob-2 {
+  right: -14%;
+  bottom: -16%;
+  width: 46vw;
+  height: 46vw;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.9) 0%, rgba(124, 58, 237, 0.45) 30%, rgba(124, 58, 237, 0.12) 55%, transparent 78%);
+  animation: cinematic-drift-2 34s var(--ds-ease) infinite alternate;
+}
+
+.cinematic-bg-blob-3 {
+  top: 28%;
+  left: 38%;
+  width: 30vw;
+  height: 30vw;
+  opacity: 0.17;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.9) 0%, rgba(245, 158, 11, 0.4) 30%, rgba(245, 158, 11, 0.1) 55%, transparent 78%);
+  animation: cinematic-drift-3 40s var(--ds-ease) infinite alternate;
+}
+
+@keyframes cinematic-drift-1 {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+
+  to {
+    transform: translate(6vw, 8vh) scale(1.15);
+  }
+}
+
+@keyframes cinematic-drift-2 {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+
+  to {
+    transform: translate(-7vw, -6vh) scale(1.1);
+  }
+}
+
+@keyframes cinematic-drift-3 {
+  from {
+    transform: translate(-4vw, 3vh) scale(0.95);
+  }
+
+  to {
+    transform: translate(5vw, -5vh) scale(1.1);
+  }
+}
+
+.cinematic-bg-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(15, 23, 42, 0.1) 100%);
+}
+
+/* Bo mix-blend-mode: overlay - blend mode buoc trinh duyet phai tron lai voi lop ben duoi moi
+   khi quang sang (o duoi) doi vi tri, tuc la ve lai grain moi frame du ban than grain dung yen.
+   Dung opacity thap thay the (van mo, chi khac 1 chut ve sac do nhung re hon nhieu). */
+.cinematic-bg-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+[data-theme='dark'] .cinematic-bg-blob {
+  opacity: 0.38;
+}
+
+[data-theme='dark'] .cinematic-bg-blob-3 {
+  opacity: 0.24;
+}
+
+[data-theme='dark'] .cinematic-bg-vignette {
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+[data-theme='dark'] .cinematic-bg-grain {
+  opacity: 0.05;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cinematic-bg-blob {
+    animation: none;
+  }
 }
 
 /* ---- Hieu ung mo modal / dropdown ---- */
@@ -282,7 +491,8 @@ table tbody tr:hover {
 .segment-sync-menu,
 .segment-searchable-select-options,
 .notification-bell-panel,
-.month-picker-popover {
+.month-picker-popover,
+.ds-select-options {
   animation: ds-popover-in var(--ds-duration-fast) var(--ds-ease);
 }
 
@@ -293,9 +503,323 @@ table tbody tr:hover {
   .segment-sync-menu,
   .segment-searchable-select-options,
   .notification-bell-panel,
-  .month-picker-popover {
+  .month-picker-popover,
+  .ds-select-options {
     animation: none;
   }
+}
+
+/* ---- ThemedSelect.jsx - dropdown tu dung thay cho <select> native ---- */
+
+.ds-select {
+  position: relative;
+}
+
+.ds-select-trigger {
+  display: flex;
+  min-height: 40px;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--ds-color-border);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-bg-surface);
+  color: var(--ds-text-body);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--ds-duration-fast) var(--ds-ease),
+    box-shadow var(--ds-duration-fast) var(--ds-ease);
+}
+
+.ds-select.is-open .ds-select-trigger,
+.ds-select-trigger:focus-visible {
+  border-color: var(--ds-color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  outline: none;
+}
+
+.ds-select-value {
+  overflow: hidden;
+  color: var(--ds-text-primary);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ds-select-caret {
+  flex: 0 0 auto;
+  color: var(--ds-text-muted);
+  font-size: 12px;
+  transition: transform var(--ds-duration-fast) var(--ds-ease);
+}
+
+.ds-select.is-open .ds-select-caret {
+  transform: rotate(180deg);
+}
+
+.ds-select.is-disabled .ds-select-trigger {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.ds-select-options {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 6px);
+  left: 0;
+  display: grid;
+  width: 100%;
+  max-height: 260px;
+  margin: 0;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid var(--ds-color-border);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-bg-surface);
+  box-shadow: var(--ds-shadow-modal);
+  list-style: none;
+}
+
+.ds-select-option {
+  display: block;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ds-text-primary);
+  text-align: left;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background-color var(--ds-duration-fast) var(--ds-ease),
+    color var(--ds-duration-fast) var(--ds-ease);
+}
+
+.ds-select-option:hover {
+  background: var(--ds-color-primary-soft);
+  color: var(--ds-color-primary);
+}
+
+.ds-select-option.is-selected {
+  background: var(--ds-color-primary);
+  color: #ffffff;
+}
+
+/* ---- ToggleSwitch.jsx - cong tac bat/tat dung chung (trang Cai dat) ---- */
+
+.ds-switch {
+  display: inline-flex;
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ds-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ds-switch-track {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  border: 1px solid var(--ds-color-border);
+  border-radius: 999px;
+  background: var(--ds-bg-surface-alt);
+  transition:
+    background-color var(--ds-duration-fast) var(--ds-ease),
+    border-color var(--ds-duration-fast) var(--ds-ease);
+}
+
+.ds-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+  transition: transform var(--ds-duration-fast) var(--ds-ease);
+}
+
+.ds-switch.is-on .ds-switch-track {
+  border-color: var(--ds-color-primary);
+  background: var(--ds-color-primary);
+}
+
+.ds-switch.is-on .ds-switch-thumb {
+  transform: translateX(20px);
+}
+
+/* ---- SettingsPage.jsx ---- */
+
+.settings-section {
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  border: 1px solid var(--ds-color-border);
+  border-radius: 14px;
+  background: var(--ds-bg-surface);
+  box-shadow: var(--ds-shadow-card);
+}
+
+.settings-section h3 {
+  margin: 0;
+  color: var(--ds-text-primary);
+  font-size: 15px;
+}
+
+.settings-section-description {
+  margin: 4px 0 16px;
+  color: var(--ds-text-muted);
+  font-size: 13px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-top: 1px dashed var(--ds-color-border);
+}
+
+.settings-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.settings-row-info {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-row-info strong {
+  color: var(--ds-text-primary);
+  font-size: 14px;
+}
+
+.settings-row-info span {
+  color: var(--ds-text-muted);
+  font-size: 13px;
+}
+
+.settings-row-info .settings-recommended-hint {
+  color: var(--ds-color-primary);
+  font-size: 12px;
+}
+
+.settings-recommended-hint em {
+  color: #b45309;
+  font-style: normal;
+}
+
+[data-theme='dark'] .settings-recommended-hint em {
+  color: #fbbf24;
+}
+
+.settings-number-field {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-number-field input {
+  width: 64px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--ds-color-border);
+  border-radius: var(--ds-radius-control);
+  background: var(--ds-bg-surface);
+  color: var(--ds-text-primary);
+  font: inherit;
+  text-align: center;
+}
+
+.settings-number-field span {
+  color: var(--ds-text-muted);
+  font-size: 13px;
+}
+
+.settings-inline-save {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.settings-toast {
+  position: fixed;
+  top: 84px;
+  right: 28px;
+  z-index: 1100;
+  display: flex;
+  min-width: 300px;
+  max-width: min(420px, calc(100vw - 48px));
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 14px 14px 16px;
+  border-radius: 14px;
+  background: var(--ds-bg-surface);
+  box-shadow: var(--ds-shadow-modal);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.settings-toast-success {
+  border: 1px solid #86efac;
+  color: #047857;
+}
+
+.settings-toast-error {
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.settings-toast-warning {
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+}
+
+[data-theme='dark'] .settings-toast-success {
+  border-color: #1f4a30;
+  color: #34d399;
+}
+
+[data-theme='dark'] .settings-toast-error {
+  border-color: #4a2e2e;
+  color: #f87171;
+}
+
+[data-theme='dark'] .settings-toast-warning {
+  border-color: #4a3e1f;
+  color: #fbbf24;
+}
+
+.settings-toast button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.settings-toast button:hover {
+  opacity: 1;
 }
 
 /* Toast goc phai tren - hien co 3 class dung chung toan app (segment-toast/org-toast/
@@ -314,14 +838,16 @@ table tbody tr:hover {
 
 .segment-toast,
 .org-toast,
-.notification-toast {
+.notification-toast,
+.settings-toast {
   animation: ds-toast-in var(--ds-duration-base) var(--ds-ease);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .segment-toast,
   .org-toast,
-  .notification-toast {
+  .notification-toast,
+  .settings-toast {
     animation: none;
   }
 }

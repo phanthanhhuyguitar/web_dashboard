@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
-import { IconBell, IconDataQuality, IconHome, IconOrgChart, IconReconciliation } from './SidebarIcons.jsx';
+import { IconBell, IconDataQuality, IconHome, IconOrgChart, IconReconciliation, IconSettings } from './SidebarIcons.jsx';
 
 const menuItems = [
   { label: 'Trang chủ', icon: <IconHome />, path: '/dashboard' },
@@ -24,6 +24,7 @@ const menuItems = [
     children: [{ label: 'Lịch sử đối soát', path: '/reconciliations/history' }],
   },
   { label: 'Kiểm tra dữ liệu', icon: <IconDataQuality />, path: '/data-quality' },
+  { label: 'Cài đặt', icon: <IconSettings />, path: '/settings' },
 ];
 
 function Sidebar() {

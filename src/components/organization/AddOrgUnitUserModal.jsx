@@ -6,6 +6,7 @@ import {
   fetchRoles,
   searchUsers,
 } from '../../api/orgUnitsApi.js';
+import ThemedSelect from '../common/ThemedSelect.jsx';
 
 const SCOPE_OPTIONS = ['ALL', 'SELF', 'CHILDREN', 'OWN'];
 const SEARCH_CONFIG = {
@@ -264,21 +265,16 @@ function AddOrgUnitUserModal({ open, orgUnit, onClose, onSuccess, onToast }) {
               <span>
                 Role <strong>*</strong>
               </span>
-              <select
+              <ThemedSelect
                 value={selectedRoleId}
+                options={roleOptions}
                 onChange={(event) => {
                   setSelectedRoleId(event.target.value);
                   setErrors((current) => ({ ...current, role: '' }));
                 }}
                 disabled={roleLoading}
-              >
-                <option value="">{roleLoading ? 'Đang tải role...' : 'Chọn role'}</option>
-                {roleOptions.map((role) => (
-                  <option value={role.value} key={role.value}>
-                    {role.label}
-                  </option>
-                ))}
-              </select>
+                placeholder={roleLoading ? 'Đang tải role...' : 'Chọn role'}
+              />
               {errors.role ? <strong className="add-org-user-error">{errors.role}</strong> : null}
             </label>
 
@@ -286,19 +282,14 @@ function AddOrgUnitUserModal({ open, orgUnit, onClose, onSuccess, onToast }) {
               <span>
                 Scope <strong>*</strong>
               </span>
-              <select
+              <ThemedSelect
                 value={scope}
+                options={SCOPE_OPTIONS.map((option) => ({ value: option, label: option }))}
                 onChange={(event) => {
                   setScope(event.target.value);
                   setErrors((current) => ({ ...current, scope: '' }));
                 }}
-              >
-                {SCOPE_OPTIONS.map((option) => (
-                  <option value={option} key={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+              />
               {errors.scope ? <strong className="add-org-user-error">{errors.scope}</strong> : null}
             </label>
           </div>

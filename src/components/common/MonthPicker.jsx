@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import ThemedSelect from './ThemedSelect.jsx';
+
 const MONTH_OPTIONS = [
   'Tháng 1',
   'Tháng 2',
@@ -62,13 +64,13 @@ function MonthPicker({ value, onChange, label, placeholder = 'Chọn tháng', ar
         <div className="month-picker-popover" role="dialog" aria-label={ariaLabel}>
           <div className="month-picker-header">
             <span>Chọn tháng</span>
-            <select value={pickerYear} onChange={(event) => setPickerYear(Number(event.target.value))} aria-label="Chọn năm">
-              {getYearOptions(pickerYear).map((year) => (
-                <option value={year} key={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+            <ThemedSelect
+              className="month-picker-year-select"
+              value={String(pickerYear)}
+              options={getYearOptions(pickerYear).map((year) => ({ value: String(year), label: String(year) }))}
+              onChange={(event) => setPickerYear(Number(event.target.value))}
+              ariaLabel="Chọn năm"
+            />
           </div>
 
           <div className="month-picker-grid">

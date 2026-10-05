@@ -265,6 +265,19 @@ function matchesSaleIdFilter(row, filters) {
   return normalizeComparable(extractSaleId(row)).includes(keyword);
 }
 
+// filters.saleIdPrefix: 'ALL' | 'CTV' | 'DCH' | 'NUMERIC' (ma chi gom chu so, khong co tien to chu).
+function matchesSaleIdPrefixFilter(row, filters) {
+  const expected = normalizeComparable(filters.saleIdPrefix || 'ALL');
+
+  if (!expected || expected === 'ALL') return true;
+
+  const saleId = normalizeComparable(extractSaleId(row));
+
+  if (expected === 'NUMERIC') return /^\d+$/.test(saleId);
+
+  return saleId.startsWith(expected);
+}
+
 function matchesRoleFilter(row, filters) {
   const expected = normalizeComparable(filters.role || 'ALL');
 
@@ -307,6 +320,7 @@ function filterUserRows(rows, filters = {}) {
     .filter((row) => matchesTnexLinkedFilter(row, filters))
     .filter((row) => matchesOrganizationFilter(row, filters))
     .filter((row) => matchesSaleIdFilter(row, filters))
+    .filter((row) => matchesSaleIdPrefixFilter(row, filters))
     .filter((row) => matchesRoleFilter(row, filters))
     .map(normalizeResultRow)
     .filter(Boolean);

@@ -1,12 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 
-const STORAGE_KEY = 'tnex-theme';
-
-function getStoredTheme() {
-  if (typeof window === 'undefined') return 'light';
-
-  return window.localStorage.getItem(STORAGE_KEY) === 'dark' ? 'dark' : 'light';
-}
+import { useAppSettings } from '../context/AppSettingsContext.jsx';
 
 export function applyTheme(theme) {
   if (typeof document === 'undefined') return;
@@ -14,19 +8,19 @@ export function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
 }
 
-// Dung chung cho moi trang co Topbar - moi instance tu doc lai localStorage luc mount, nen
-// luon dong bo voi lua chon gan nhat du khong co context/state dung chung giua cac trang.
+// Theme gio la 1 field trong AppSettingsContext (dong bo storage voi trang Cai dat) - hook nay
+// chi con la lop tien ich de cac component cu (Topbar...) dung API isDark/toggleTheme quen thuoc.
 export function useTheme() {
-  const [theme, setTheme] = useState(getStoredTheme);
+  const { settings, updateSetting } = useAppSettings();
+  const theme = settings.theme;
 
   useEffect(() => {
     applyTheme(theme);
-    window.localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((current) => (current === 'dark' ? 'light' : 'dark'));
-  }, []);
+    updateSetting('theme', theme === 'dark' ? 'light' : 'dark');
+  }, [theme, updateSetting]);
 
   return { theme, isDark: theme === 'dark', toggleTheme };
 }

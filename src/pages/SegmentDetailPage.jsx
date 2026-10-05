@@ -416,7 +416,8 @@ function chunkArray(items, size) {
 }
 
 function getFilterItems(filters = {}) {
-  const organization = filters.organizationName || filters.orgName || filters.organizationCode || filters.organizationId;
+  const organization =
+    filters.organizationName || filters.orgName || filters.organizationCode || filters.organizationId;
 
   return [
     ['Từ ngày tạo tài khoản', filters.createdFrom || 'Tất cả'],
@@ -505,7 +506,7 @@ function TablePagination({ page, totalPages, totalItems, itemLabel = 'bản ghi'
             <span className="segment-page-ellipsis" key={item}>
               ...
             </span>
-          ),
+          )
         )}
         <button type="button" onClick={() => goToPage(page + 1)} disabled={page >= totalPages}>
           Sau →
@@ -580,7 +581,7 @@ function SegmentDetailPage() {
   const userIdCopyText = useMemo(() => formatUserIdsForCopy(segmentUserIds), [segmentUserIds]);
   const selectedTemplateOption = useMemo(
     () => notificationTemplates.find((template) => template.code === selectedTemplateCode) || null,
-    [notificationTemplates, selectedTemplateCode],
+    [notificationTemplates, selectedTemplateCode]
   );
   const filteredTemplateOptions = useMemo(() => {
     const searchText = normalizeSearchText(templateSearch);
@@ -615,7 +616,8 @@ function SegmentDetailPage() {
 
     return usersWithLoan.slice(start, start + PAGE_SIZE);
   }, [usersWithLoan, usersWithLoanPage]);
-  const closedLoanRecords = conversion?.closedLoanRows || conversion?.closedLoanRecordsInMonth || conversion?.closedLoanRecords || [];
+  const closedLoanRecords =
+    conversion?.closedLoanRows || conversion?.closedLoanRecordsInMonth || conversion?.closedLoanRecords || [];
   const closedLoanTotalPages = Math.max(Math.ceil(closedLoanRecords.length / PAGE_SIZE), 1);
   const pagedClosedLoanRecords = useMemo(() => {
     const start = (closedLoanPage - 1) * PAGE_SIZE;
@@ -666,7 +668,7 @@ function SegmentDetailPage() {
       setConversion(result);
       setUsersWithLoanPage(1);
       setClosedLoanPage(1);
-    } catch (error) {
+    } catch {
       if (conversionRequestIdRef.current !== requestId) return;
 
       setConversion(buildEmptySegmentConversion(segmentUsers));
@@ -827,7 +829,9 @@ function SegmentDetailPage() {
     } else {
       const errorCount = finalBatches.filter((item) => item.status === 'error').length;
 
-      setPushError(`Có ${errorCount} lượt gửi thất bại. Bấm "Gửi lại các lượt lỗi" để gửi lại (không gửi trùng các lượt đã thành công).`);
+      setPushError(
+        `Có ${errorCount} lượt gửi thất bại. Bấm "Gửi lại các lượt lỗi" để gửi lại (không gửi trùng các lượt đã thành công).`
+      );
       reportPushNotiEvent({
         type: 'PUSH_NOTI_FAILED',
         jobId: pushJobIdRef.current,
@@ -893,7 +897,11 @@ function SegmentDetailPage() {
               <h1>Chi tiết Segment</h1>
               <p>Xem thông tin bộ lọc, danh sách người dùng và hiệu quả chuyển đổi của segment.</p>
             </div>
-            <button className="segment-secondary-button ds-button ds-button-secondary" type="button" onClick={() => navigate('/segments')}>
+            <button
+              className="segment-secondary-button ds-button ds-button-secondary"
+              type="button"
+              onClick={() => navigate('/segments')}
+            >
               Quay lại
             </button>
           </div>
@@ -919,7 +927,10 @@ function SegmentDetailPage() {
                   <DetailItem label="Người tạo" value={segment.createdBy} />
                   <DetailItem label="Ngày tạo" value={formatDateTime(segment.createdAt)} />
                   <DetailItem label="Ngày cập nhật" value={formatDateTime(segment.updatedAt)} />
-                  <DetailItem label="Số người dùng đã lưu" value={`${segmentUsers.length || Number(segment.totalUsers) || 0} user`} />
+                  <DetailItem
+                    label="Số người dùng đã lưu"
+                    value={`${segmentUsers.length || Number(segment.totalUsers) || 0} user`}
+                  />
                 </div>
               </section>
 
@@ -977,7 +988,11 @@ function SegmentDetailPage() {
                   <div className="segment-pagination">
                     <span>Tổng số {segmentUsers.length.toLocaleString('vi-VN')} user</span>
                     <div className="segment-page-buttons">
-                      <button type="button" onClick={() => setUserPage((page) => Math.max(page - 1, 1))} disabled={userPage <= 1}>
+                      <button
+                        type="button"
+                        onClick={() => setUserPage((page) => Math.max(page - 1, 1))}
+                        disabled={userPage <= 1}
+                      >
                         ← Trước
                       </button>
                       {getPaginationItems(userPage, userTotalPages).map((item) =>
@@ -996,9 +1011,13 @@ function SegmentDetailPage() {
                           <span className="segment-page-ellipsis" key={item}>
                             ...
                           </span>
-                        ),
+                        )
                       )}
-                      <button type="button" onClick={() => setUserPage((page) => Math.min(page + 1, userTotalPages))} disabled={userPage >= userTotalPages}>
+                      <button
+                        type="button"
+                        onClick={() => setUserPage((page) => Math.min(page + 1, userTotalPages))}
+                        disabled={userPage >= userTotalPages}
+                      >
                         Sau →
                       </button>
                     </div>
@@ -1012,7 +1031,12 @@ function SegmentDetailPage() {
                     <h2>Hiệu quả chuyển đổi</h2>
                     <p>Theo dõi user trong segment phát sinh đơn và đơn giải ngân theo dữ liệu mới nhất.</p>
                   </div>
-                  <button className="segment-primary-button ds-button ds-button-primary" type="button" onClick={() => loadConversion({ force: true })} disabled={conversionLoading}>
+                  <button
+                    className="segment-primary-button ds-button ds-button-primary"
+                    type="button"
+                    onClick={() => loadConversion({ force: true })}
+                    disabled={conversionLoading}
+                  >
                     {conversionLoading ? 'Đang tải...' : 'Làm mới'}
                   </button>
                 </div>
@@ -1024,15 +1048,28 @@ function SegmentDetailPage() {
                   <>
                     <div className="segment-conversion-kpis">
                       <KpiCard label="Tổng user trong segment" value={formatNumber(segmentUserTotal)} />
-                      <KpiCard label="User có đơn" value={`${formatNumber(conversion.usersWithLoanCount)} / ${formatNumber(segmentUserTotal)}`} />
+                      <KpiCard
+                        label="User có đơn"
+                        value={`${formatNumber(conversion.usersWithLoanCount)} / ${formatNumber(segmentUserTotal)}`}
+                      />
                       <KpiCard label="Tỷ lệ chuyển đổi ra đơn" value={formatRate(usersWithLoanRate)} />
                       <KpiCard
                         label="User có đơn giải ngân"
                         value={`${formatNumber(conversion.usersWithClosedLoanCount)} / ${formatNumber(segmentUserTotal)}`}
                         subValue={formatRate(usersWithClosedLoanRate)}
                       />
-                      <KpiCard label="Tổng đơn CLOSED" value={formatNumber(conversion.closedLoanCount ?? conversion.totalClosedLoanRecordsInMonth ?? conversion.totalClosedLoanRecords)} />
-                      <KpiCard label="Số tiền giải ngân" value={formatNumber(conversion.approvedAmountClosed ?? conversion.totalApprovedAmountClosed)} />
+                      <KpiCard
+                        label="Tổng đơn CLOSED"
+                        value={formatNumber(
+                          conversion.closedLoanCount ??
+                            conversion.totalClosedLoanRecordsInMonth ??
+                            conversion.totalClosedLoanRecords
+                        )}
+                      />
+                      <KpiCard
+                        label="Số tiền giải ngân"
+                        value={formatNumber(conversion.approvedAmountClosed ?? conversion.totalApprovedAmountClosed)}
+                      />
                     </div>
 
                     {/* Tam an bang chi tiet "User co don"/"User co don giai ngan" - da co so lieu tong hop
@@ -1040,61 +1077,81 @@ function SegmentDetailPage() {
                     {/* eslint-disable-next-line no-constant-condition */}
                     {false ? (
                       <>
-                    <div className="segment-conversion-section">
-                      <h3>User có đơn</h3>
-                      <SimpleTable
-                        columns={[
-                          { key: 'index', label: 'ID', render: (_, index) => (usersWithLoanPage - 1) * PAGE_SIZE + index + 1 },
-                          { key: 'saleId', label: 'Mã Sale', render: (row) => formatSaleIdForDisplay(row.saleId) },
-                          { key: 'userId', label: 'UserID' },
-                          { key: 'loanCount', label: 'Số đơn' },
-                          { key: 'latestStatus', label: 'Trạng thái gần nhất' },
-                          { key: 'latestEventTime', label: 'Thời gian gần nhất', render: (row) => formatDateTime(row.latestEventTime) },
-                        ]}
-                        rows={pagedUsersWithLoan}
-                        rowKey={(row, index) => `${row.saleId}-${row.userId}-${row.latestEventTime}-${index}`}
-                        pagination={
-                          <TablePagination
-                            page={usersWithLoanPage}
-                            totalPages={usersWithLoanTotalPages}
-                            totalItems={usersWithLoan.length}
-                            pageSize={PAGE_SIZE}
-                            itemLabel="user"
-                            onPageChange={setUsersWithLoanPage}
+                        <div className="segment-conversion-section">
+                          <h3>User có đơn</h3>
+                          <SimpleTable
+                            columns={[
+                              {
+                                key: 'index',
+                                label: 'ID',
+                                render: (_, index) => (usersWithLoanPage - 1) * PAGE_SIZE + index + 1,
+                              },
+                              { key: 'saleId', label: 'Mã Sale', render: (row) => formatSaleIdForDisplay(row.saleId) },
+                              { key: 'userId', label: 'UserID' },
+                              { key: 'loanCount', label: 'Số đơn' },
+                              { key: 'latestStatus', label: 'Trạng thái gần nhất' },
+                              {
+                                key: 'latestEventTime',
+                                label: 'Thời gian gần nhất',
+                                render: (row) => formatDateTime(row.latestEventTime),
+                              },
+                            ]}
+                            rows={pagedUsersWithLoan}
+                            rowKey={(row, index) => `${row.saleId}-${row.userId}-${row.latestEventTime}-${index}`}
+                            pagination={
+                              <TablePagination
+                                page={usersWithLoanPage}
+                                totalPages={usersWithLoanTotalPages}
+                                totalItems={usersWithLoan.length}
+                                pageSize={PAGE_SIZE}
+                                itemLabel="user"
+                                onPageChange={setUsersWithLoanPage}
+                              />
+                            }
+                            emptyText="Không có dữ liệu phù hợp từ thời điểm tạo segment"
                           />
-                        }
-                        emptyText="Không có dữ liệu phù hợp từ thời điểm tạo segment"
-                      />
-                    </div>
+                        </div>
 
-                    <div className="segment-conversion-section">
-                      <h3>Đơn giải ngân CLOSED</h3>
-                      <SimpleTable
-                        columns={[
-                          { key: 'index', label: 'ID', render: (_, index) => (closedLoanPage - 1) * PAGE_SIZE + index + 1 },
-                          { key: 'saleId', label: 'Mã Sale', render: (row) => formatSaleIdForDisplay(row.saleId) },
-                          { key: 'userId', label: 'UserID' },
-                          { key: 'loanId', label: 'LoanId' },
-                          { key: 'phoneNumber', label: 'Phone' },
-                          { key: 'status', label: 'Trạng thái' },
-                          { key: 'eventTime', label: 'Thời gian CLOSED', render: (row) => formatDateTime(row.eventTime) },
-                          { key: 'approvedAmount', label: 'ApprovedAmount', render: (row) => formatNumber(row.approvedAmount) },
-                        ]}
-                        rows={pagedClosedLoanRecords}
-                        emptyText="Không có dữ liệu phù hợp từ thời điểm tạo segment"
-                        rowKey={(row, index) => `${row.loanId}-${row.status}-${row.eventTime}-${index}`}
-                        pagination={
-                          <TablePagination
-                            page={closedLoanPage}
-                            totalPages={closedLoanTotalPages}
-                            totalItems={closedLoanRecords.length}
-                            pageSize={PAGE_SIZE}
-                            itemLabel="bản ghi"
-                            onPageChange={setClosedLoanPage}
+                        <div className="segment-conversion-section">
+                          <h3>Đơn giải ngân CLOSED</h3>
+                          <SimpleTable
+                            columns={[
+                              {
+                                key: 'index',
+                                label: 'ID',
+                                render: (_, index) => (closedLoanPage - 1) * PAGE_SIZE + index + 1,
+                              },
+                              { key: 'saleId', label: 'Mã Sale', render: (row) => formatSaleIdForDisplay(row.saleId) },
+                              { key: 'userId', label: 'UserID' },
+                              { key: 'loanId', label: 'LoanId' },
+                              { key: 'phoneNumber', label: 'Phone' },
+                              { key: 'status', label: 'Trạng thái' },
+                              {
+                                key: 'eventTime',
+                                label: 'Thời gian CLOSED',
+                                render: (row) => formatDateTime(row.eventTime),
+                              },
+                              {
+                                key: 'approvedAmount',
+                                label: 'ApprovedAmount',
+                                render: (row) => formatNumber(row.approvedAmount),
+                              },
+                            ]}
+                            rows={pagedClosedLoanRecords}
+                            emptyText="Không có dữ liệu phù hợp từ thời điểm tạo segment"
+                            rowKey={(row, index) => `${row.loanId}-${row.status}-${row.eventTime}-${index}`}
+                            pagination={
+                              <TablePagination
+                                page={closedLoanPage}
+                                totalPages={closedLoanTotalPages}
+                                totalItems={closedLoanRecords.length}
+                                pageSize={PAGE_SIZE}
+                                itemLabel="bản ghi"
+                                onPageChange={setClosedLoanPage}
+                              />
+                            }
                           />
-                        }
-                      />
-                    </div>
+                        </div>
                       </>
                     ) : null}
                   </>
@@ -1106,13 +1163,23 @@ function SegmentDetailPage() {
 
         {userIdModalOpen ? (
           <div className="segment-modal-backdrop" role="presentation">
-            <section className="segment-modal segment-user-id-modal" role="dialog" aria-modal="true" aria-labelledby="segment-user-id-modal-title">
+            <section
+              className="segment-modal segment-user-id-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="segment-user-id-modal-title"
+            >
               <div className="segment-modal-header">
                 <div>
                   <h2 id="segment-user-id-modal-title">Danh sách UserID</h2>
                   <p>Danh sách UserID đã lưu trong segment, dùng để copy nhanh.</p>
                 </div>
-                <button className="segment-icon-button" type="button" onClick={() => setUserIdModalOpen(false)} aria-label="Đóng">
+                <button
+                  className="segment-icon-button"
+                  type="button"
+                  onClick={() => setUserIdModalOpen(false)}
+                  aria-label="Đóng"
+                >
                   x
                 </button>
               </div>
@@ -1120,22 +1187,42 @@ function SegmentDetailPage() {
               <div className="segment-modal-form segment-user-id-modal-body">
                 <div className="segment-user-id-toolbar">
                   <strong>Tổng UserID hợp lệ: {segmentUserIds.length}</strong>
-                  <button className="segment-secondary-button ds-button ds-button-secondary" type="button" onClick={copyUserIds} disabled={!userIdCopyText}>
+                  <button
+                    className="segment-secondary-button ds-button ds-button-secondary"
+                    type="button"
+                    onClick={copyUserIds}
+                    disabled={!userIdCopyText}
+                  >
                     Copy toàn bộ
                   </button>
                 </div>
                 {userIdCopyText ? (
-                  <textarea ref={userIdTextareaRef} className="segment-user-id-textarea" value={userIdCopyText} readOnly spellCheck={false} />
+                  <textarea
+                    ref={userIdTextareaRef}
+                    className="segment-user-id-textarea"
+                    value={userIdCopyText}
+                    readOnly
+                    spellCheck={false}
+                  />
                 ) : (
                   <div className="segment-user-id-empty">Không có UserID để hiển thị.</div>
                 )}
               </div>
 
               <div className="segment-modal-actions">
-                <button className="segment-secondary-button ds-button ds-button-secondary" type="button" onClick={() => setUserIdModalOpen(false)}>
+                <button
+                  className="segment-secondary-button ds-button ds-button-secondary"
+                  type="button"
+                  onClick={() => setUserIdModalOpen(false)}
+                >
                   Đóng
                 </button>
-                <button className="segment-primary-button ds-button ds-button-primary" type="button" onClick={copyUserIds} disabled={!userIdCopyText}>
+                <button
+                  className="segment-primary-button ds-button ds-button-primary"
+                  type="button"
+                  onClick={copyUserIds}
+                  disabled={!userIdCopyText}
+                >
                   Copy
                 </button>
               </div>
@@ -1145,17 +1232,30 @@ function SegmentDetailPage() {
 
         {pushNotiModalOpen ? (
           <div className="segment-modal-backdrop" role="presentation">
-            <section className="segment-modal segment-push-noti-modal" role="dialog" aria-modal="true" aria-labelledby="segment-push-noti-modal-title">
+            <section
+              className="segment-modal segment-push-noti-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="segment-push-noti-modal-title"
+            >
               <div className="segment-modal-header">
                 <div>
                   <h2 id="segment-push-noti-modal-title">Gửi Push Notification</h2>
                   <p>
-                    {pushStep === 'form' ? 'Chọn nội dung thông báo để gửi tới toàn bộ user đã lưu trong segment.' : null}
+                    {pushStep === 'form'
+                      ? 'Chọn nội dung thông báo để gửi tới toàn bộ user đã lưu trong segment.'
+                      : null}
                     {pushStep === 'confirm' ? 'Xác nhận trước khi gửi thông báo thật tới user.' : null}
                     {pushStep === 'progress' ? 'Đang gửi thông báo theo từng lượt để tránh quá tải hệ thống.' : null}
                   </p>
                 </div>
-                <button className="segment-icon-button" type="button" onClick={closePushNotiModal} aria-label="Đóng" disabled={pushSubmitting}>
+                <button
+                  className="segment-icon-button"
+                  type="button"
+                  onClick={closePushNotiModal}
+                  aria-label="Đóng"
+                  disabled={pushSubmitting}
+                >
                   x
                 </button>
               </div>
@@ -1230,7 +1330,9 @@ function SegmentDetailPage() {
                             </button>
                           ))}
                           {filteredTemplateOptions.length === 0 ? (
-                            <div className="segment-searchable-select-empty">Không tìm thấy nội dung thông báo phù hợp</div>
+                            <div className="segment-searchable-select-empty">
+                              Không tìm thấy nội dung thông báo phù hợp
+                            </div>
                           ) : null}
                         </div>
                       ) : null}
@@ -1324,7 +1426,8 @@ function SegmentDetailPage() {
                     <p>
                       Bạn sắp gửi thông báo <strong>{selectedTemplateOption?.code || selectedTemplateCode}</strong> tới{' '}
                       <strong>{segmentUserIds.length.toLocaleString('vi-VN')}</strong> user, chia thành{' '}
-                      <strong>{pushBatchCount}</strong> lượt gửi (tối đa {PUSH_NOTIFICATION_BATCH_SIZE.toLocaleString('vi-VN')} user/lượt).
+                      <strong>{pushBatchCount}</strong> lượt gửi (tối đa{' '}
+                      {PUSH_NOTIFICATION_BATCH_SIZE.toLocaleString('vi-VN')} user/lượt).
                     </p>
                     {actionScreen ? (
                       <p>
@@ -1332,7 +1435,8 @@ function SegmentDetailPage() {
                       </p>
                     ) : null}
                     <p className="segment-push-confirm-warning">
-                      Đây là thông báo thật, sẽ gửi tới thiết bị của user. Vui lòng kiểm tra kỹ nội dung trước khi xác nhận.
+                      Đây là thông báo thật, sẽ gửi tới thiết bị của user. Vui lòng kiểm tra kỹ nội dung trước khi xác
+                      nhận.
                     </p>
                   </div>
                 </div>
@@ -1362,7 +1466,11 @@ function SegmentDetailPage() {
               <div className="segment-modal-actions">
                 {pushStep === 'form' ? (
                   <>
-                    <button className="segment-secondary-button ds-button ds-button-secondary" type="button" onClick={closePushNotiModal}>
+                    <button
+                      className="segment-secondary-button ds-button ds-button-secondary"
+                      type="button"
+                      onClick={closePushNotiModal}
+                    >
                       Hủy
                     </button>
                     <button
@@ -1378,10 +1486,18 @@ function SegmentDetailPage() {
 
                 {pushStep === 'confirm' ? (
                   <>
-                    <button className="segment-secondary-button ds-button ds-button-secondary" type="button" onClick={() => setPushStep('form')}>
+                    <button
+                      className="segment-secondary-button ds-button ds-button-secondary"
+                      type="button"
+                      onClick={() => setPushStep('form')}
+                    >
                       Quay lại
                     </button>
-                    <button className="segment-primary-button ds-button ds-button-primary" type="button" onClick={handleConfirmSendPushNotification}>
+                    <button
+                      className="segment-primary-button ds-button ds-button-primary"
+                      type="button"
+                      onClick={handleConfirmSendPushNotification}
+                    >
                       Xác nhận gửi
                     </button>
                   </>
@@ -1389,11 +1505,20 @@ function SegmentDetailPage() {
 
                 {pushStep === 'progress' ? (
                   <>
-                    <button className="segment-secondary-button ds-button ds-button-secondary" type="button" onClick={closePushNotiModal} disabled={pushSubmitting}>
+                    <button
+                      className="segment-secondary-button ds-button ds-button-secondary"
+                      type="button"
+                      onClick={closePushNotiModal}
+                      disabled={pushSubmitting}
+                    >
                       Đóng
                     </button>
                     {!pushSubmitting && pushBatches.some((batch) => batch.status === 'error') ? (
-                      <button className="segment-primary-button ds-button ds-button-primary" type="button" onClick={handleRetryFailedBatches}>
+                      <button
+                        className="segment-primary-button ds-button ds-button-primary"
+                        type="button"
+                        onClick={handleRetryFailedBatches}
+                      >
                         Gửi lại các lượt lỗi
                       </button>
                     ) : null}
@@ -1405,7 +1530,11 @@ function SegmentDetailPage() {
         ) : null}
 
         {toastMessage?.text ? (
-          <div className={`segment-toast segment-toast-${toastMessage.type || 'success'}`} role="status" aria-live="polite">
+          <div
+            className={`segment-toast segment-toast-${toastMessage.type || 'success'}`}
+            role="status"
+            aria-live="polite"
+          >
             <span>{toastMessage.text}</span>
             <button type="button" onClick={() => setToastMessage(null)} aria-label="Đóng thông báo">
               x

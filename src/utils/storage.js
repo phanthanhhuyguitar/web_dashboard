@@ -50,21 +50,21 @@ export function clearRememberedLoginId() {
   localStorage.removeItem(REMEMBERED_LOGIN_ID_KEY);
 }
 
-export function getAuthToken() {
+export function getAccessToken() {
   const token = isRememberLogin() ? localStorage.getItem(TOKEN_KEY) : sessionStorage.getItem(TOKEN_KEY);
 
   if (!token) return null;
 
   if (isJwtExpired(token)) {
-    clearAuth();
+    clearAccessToken();
     return null;
   }
 
   return token;
 }
 
-export function setAuthToken(token, remember = false) {
-  clearAuth();
+export function setAccessToken(token, remember = false) {
+  clearAccessToken();
 
   if (!token) return;
 
@@ -80,18 +80,12 @@ export function setAuthToken(token, remember = false) {
   localStorage.removeItem(REMEMBER_LOGIN_KEY);
 }
 
-export function clearAuth() {
+export function clearAccessToken() {
   localStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REMEMBER_LOGIN_KEY);
 }
 
 export function hasAccessToken() {
-  return Boolean(getAuthToken());
+  return Boolean(getAccessToken());
 }
-
-export const getAccessToken = getAuthToken;
-export const setAccessToken = setAuthToken;
-export const clearAccessToken = clearAuth;
-
-export { REMEMBERED_LOGIN_ID_KEY, REMEMBER_LOGIN_KEY, TOKEN_KEY };

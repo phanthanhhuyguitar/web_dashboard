@@ -10,6 +10,7 @@ import ProductPerformanceChart from '../components/dashboard/ProductPerformanceC
 import ProductStructureCard from '../components/dashboard/ProductStructureCard.jsx';
 import TopTeamCard from '../components/dashboard/TopTeamCard.jsx';
 import TopTeamLeadCard from '../components/dashboard/TopTeamLeadCard.jsx';
+import ThemedSelect from '../components/common/ThemedSelect.jsx';
 import Sidebar from '../components/layout/Sidebar.jsx';
 import Topbar from '../components/layout/Topbar.jsx';
 import { DEFAULT_DASHBOARD_RANGE, DEFAULT_MONTH } from '../config/constants.js';
@@ -255,17 +256,13 @@ function DashboardPage() {
                 <div className="month-picker-popover" role="dialog" aria-label="Chọn tháng dashboard">
                   <div className="month-picker-header">
                     <span>Chọn tháng</span>
-                    <select
-                      value={pickerYear}
+                    <ThemedSelect
+                      className="month-picker-year-select"
+                      value={String(pickerYear)}
+                      options={getYearOptions(pickerYear).map((year) => ({ value: String(year), label: String(year) }))}
                       onChange={(event) => setPickerYear(Number(event.target.value))}
-                      aria-label="Chọn năm"
-                    >
-                      {getYearOptions(pickerYear).map((year) => (
-                        <option value={year} key={year}>
-                          {year}
-                        </option>
-                      ))}
-                    </select>
+                      ariaLabel="Chọn năm"
+                    />
                   </div>
 
                   <div className="month-picker-grid">
@@ -308,7 +305,13 @@ function DashboardPage() {
           </section>
 
           <section className="dashboard-grid-secondary">
-            <FunnelCard data={dashboardData.funnel} status={dashboardData.funnelStatus} />
+            <FunnelCard
+              data={dashboardData.funnel}
+              status={dashboardData.funnelStatus}
+              loans={dashboardData.loans}
+              users={dashboardData.users}
+              range={dashboardData.range}
+            />
             <TopTeamLeadCard
               data={dashboardData.topCtvByRevenue}
               status={dashboardData.topCtvStatus}

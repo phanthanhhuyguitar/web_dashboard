@@ -45,5 +45,6 @@ export const ENV = {
     'VITE_RECONCILIATION_HISTORY_ENDPOINT',
     '/digital-sale-admin/api/v1/admin/reconciliations/search-history'
   ),
+  USER_DETAIL_ENDPOINT: getEnv('VITE_USER_DETAIL_ENDPOINT', '/digital-sale-admin/api/v1/admin/users/profile'),
   API_TIMEOUT: toNumber(getEnv('VITE_API_TIMEOUT', '30000'), 30000),
 };

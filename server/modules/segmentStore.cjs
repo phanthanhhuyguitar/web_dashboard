@@ -33,7 +33,7 @@ function readSegments() {
     const parsed = JSON.parse(fs.readFileSync(SEGMENTS_MASTER_FILE, 'utf8'));
 
     return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
+  } catch {
     const backupFile = path.join(SEGMENTS_OUTPUT_DIR, `segments_all_corrupted_${timestamp()}.json`);
 
     try {

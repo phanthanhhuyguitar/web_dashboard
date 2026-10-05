@@ -1,8 +1,10 @@
 .login-page {
+  position: relative;
+  z-index: 1;
   display: grid;
   min-height: 100vh;
   grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
-  background: #f4f7fb;
+  background: transparent;
 }
 
 .login-brand-panel {

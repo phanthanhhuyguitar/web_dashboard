@@ -14,19 +14,29 @@ const {
 const { upsertLoans } = require('../utils/loanStore.cjs');
 const { upsertLoansFullFromList } = require('../utils/loanStoreV2.cjs');
 const { createSyncCompletedNotification, createSyncFailedNotification } = require('./notificationStore.cjs');
+const { getSyncConfig } = require('../utils/syncConfigStore.cjs');
 
 const DEFAULT_API_BASE_URL = 'https://api-gw-ds.tnex.com.vn';
 const DEFAULT_LOANS_ENDPOINT = '/digital-sale-admin/api/v1/admin/loans';
 const LOAN_STATUS_FILE = path.join(LOANS_OUTPUT_DIR, 'sync_loan_job_status.json');
 const LOAN_PAGE_SIZE = Number(process.env.LOAN_PAGE_SIZE || process.env.SYNC_LOAN_PAGE_SIZE || 100);
-const LOAN_SYNC_CONFIG = {
+// Web nay chi 1 nguoi dung - da giam delay mac dinh de dong bo nhanh hon. "let" vi
+// delayBetweenRequestsMs duoc doc lai tu SQLite (trang Cai dat) truoc moi lan chay job qua
+// refreshLoanSyncTuningConfig(), khong can restart process.
+let LOAN_SYNC_CONFIG = {
   concurrency: 1,
-  delayBetweenRequestsMs: Number(process.env.LOAN_SYNC_DELAY_MS || 500),
+  delayBetweenRequestsMs: Number(process.env.LOAN_SYNC_DELAY_MS || 150),
   timeoutMs: Number(process.env.LOAN_SYNC_TIMEOUT_MS || 15000),
   maxRetries: Number(process.env.LOAN_SYNC_MAX_RETRIES || 0),
   retryDelayMs: Number(process.env.LOAN_SYNC_RETRY_DELAY_MS || 1000),
   logEvery: Number(process.env.LOAN_SYNC_LOG_EVERY || 1),
 };
+
+function refreshLoanSyncTuningConfig() {
+  const tuning = getSyncConfig();
+
+  LOAN_SYNC_CONFIG = { ...LOAN_SYNC_CONFIG, delayBetweenRequestsMs: tuning.loanListDelayMs };
+}
 
 function timestamp() {
   const d = new Date();
@@ -371,6 +381,8 @@ async function runSyncLoansJob(job, token, { writeStatus }) {
   let failedStream = null;
   const startMs = Date.now();
   const fetchedLoans = [];
+
+  refreshLoanSyncTuningConfig();
 
   try {
     ensureDir(LOANS_OUTPUT_DIR);

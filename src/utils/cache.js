@@ -30,11 +30,3 @@ export function setCache(key, data, ttlMs) {
     // Cache is an optimization only; ignore storage failures.
   }
 }
-
-export function removeCache(key) {
-  try {
-    sessionStorage.removeItem(key);
-  } catch {
-    // Cache is an optimization only; ignore storage failures.
-  }
-}

@@ -78,10 +78,15 @@ button:disabled {
 }
 
 .app-crash-screen {
+  /* Dung position: fixed + inset: 0 thay vi min-height: 100vh - dam bao luon phu dung toan bo
+     viewport de canh giua chinh xac, khong phu thuoc chieu rong cua bat ky the cha nao. */
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
   display: grid;
-  min-height: 100vh;
-  place-content: center;
+  place-items: center;
   padding: 32px;
+  overflow: auto;
   background: #f5f7fb;
 }
 

@@ -13,6 +13,7 @@ const {
 } = require('./utils/outputPaths.cjs');
 const { upsertUsers } = require('./utils/userStore.cjs');
 const { upsertUsersFullFromList, upsertUsersFullFromDetail, getUserDetailSyncInfoMap } = require('./utils/userStoreV2.cjs');
+const { getSyncConfig } = require('./utils/syncConfigStore.cjs');
 const {
   createSyncStartedNotification,
   createSyncCompletedNotification,
@@ -83,23 +84,41 @@ const USER_DETAIL_URL =
   `${API_BASE_URL}/digital-sale-admin/api/v1/admin/users/profile`;
 const PORT = Number(process.env.SYNC_USERS_PORT || process.env.PORT || 4174);
 
-const SYNC_USER_CONFIG = {
+// Web nay chi 1 nguoi dung (khong con rui ro spam anh huong nguoi khac) - da tang toc do mac
+// dinh (giam delay, tang concurrency/gioi han batch) so voi ban dau. Gia tri delay/concurrency
+// hien tai doc TU SQLite (sync_config, chinh qua trang Cai dat) - "let" thay vi "const" vi
+// duoc GHI DE lai (refreshSyncTuningConfig) ngay truoc moi lan job chay, de lay dung gia tri
+// moi nhat ma khong can restart process nay.
+let SYNC_USER_CONFIG = {
   pageSize: Number(process.env.SYNC_USER_PAGE_SIZE || 20),
   concurrency: 1,
-  delayBetweenRequestsMs: Number(process.env.SYNC_USER_DELAY_MS || 500),
+  delayBetweenRequestsMs: Number(process.env.SYNC_USER_DELAY_MS || 150),
   timeoutMs: Number(process.env.SYNC_USER_TIMEOUT_MS || 15000),
   maxRetries: 0,
   logEveryPage: true,
 };
 
-const USER_DETAIL_CONFIG = {
-  concurrency: getNumberEnv('USER_DETAIL_CONCURRENCY', 1, 1),
-  delayBetweenRequestsMs: getNumberEnv('USER_DETAIL_DELAY_MS', 500, 0),
+let USER_DETAIL_CONFIG = {
+  concurrency: getNumberEnv('USER_DETAIL_CONCURRENCY', 5, 1),
+  delayBetweenRequestsMs: getNumberEnv('USER_DETAIL_DELAY_MS', 150, 0),
   timeoutMs: getNumberEnv('USER_DETAIL_TIMEOUT_MS', 15000, 1000),
   maxRetries: getNumberEnv('USER_DETAIL_MAX_RETRIES', 0, 0),
   retryDelayMs: getNumberEnv('USER_DETAIL_RETRY_DELAY_MS', 1000, 0),
   logEvery: getNumberEnv('USER_DETAIL_LOG_EVERY', 50, 1),
 };
+
+// Doc lai delay/concurrency tu SQLite (trang Cai dat) va ghi de vao 2 config o tren - goi o dau
+// moi lan chay job (runSyncJob/runSyncUserDetailsJob) de luon dung gia tri moi nhat.
+function refreshSyncTuningConfig() {
+  const tuning = getSyncConfig();
+
+  SYNC_USER_CONFIG = { ...SYNC_USER_CONFIG, delayBetweenRequestsMs: tuning.userListDelayMs };
+  USER_DETAIL_CONFIG = {
+    ...USER_DETAIL_CONFIG,
+    delayBetweenRequestsMs: tuning.userDetailDelayMs,
+    concurrency: tuning.userDetailConcurrency,
+  };
+}
 
 let currentJob = null;
 const jobs = new Map();
@@ -585,6 +604,8 @@ async function runSyncJob(job, token) {
   const startMs = Date.now();
   let page = 0;
 
+  refreshSyncTuningConfig();
+
   try {
     writer = fs.createWriteStream(job.outputFileAbs, { encoding: 'utf8' });
     writer.on('error', (error) => {
@@ -864,6 +885,8 @@ async function runSyncUserDetailsJob(job, token) {
   let failedStream = null;
   const startMs = Date.now();
 
+  refreshSyncTuningConfig();
+
   try {
     job.currentMessage = 'Đang tìm file danh sách user mới nhất...';
     writeStatus(job);
@@ -895,8 +918,10 @@ async function runSyncUserDetailsJob(job, token) {
       // getUserSyncInfoMap() (bang V1 users.syncedAt) - cot nay bi CA 2 job cung ghi de moi lan
       // chay, nen staleCutoff luon thay moi nguoi "vua dong bo" (theo lan LIST gan nhat) va
       // khong bao gio phat hien duoc ai thuc su can dong bo CHI TIET lai (Need sync luon = 0).
+      const tuning = getSyncConfig();
+      const staleRefreshBatchLimit = tuning.staleRefreshBatchLimit ?? getStaleRefreshBatchLimit();
       const syncInfoMap = getUserDetailSyncInfoMap();
-      const staleCutoffMs = Date.now() - getStaleRefreshDays() * 24 * 60 * 60 * 1000;
+      const staleCutoffMs = Date.now() - (tuning.staleRefreshDays ?? getStaleRefreshDays()) * 24 * 60 * 60 * 1000;
       const newIds = userIds.filter((id) => !syncInfoMap.has(id));
       const staleIds = userIds
         .filter((id) => {
@@ -906,10 +931,10 @@ async function runSyncUserDetailsJob(job, token) {
 
           return Number.isFinite(syncedAtMs) && syncedAtMs < staleCutoffMs;
         })
-        .slice(0, getStaleRefreshBatchLimit());
+        .slice(0, staleRefreshBatchLimit);
 
       remainingUserIds = [...newIds, ...staleIds];
-      logLine(job, `SQLite store: ${newIds.length} user moi, ${staleIds.length} user cu can refresh (gioi han ${getStaleRefreshBatchLimit()}).`);
+      logLine(job, `SQLite store: ${newIds.length} user moi, ${staleIds.length} user cu can refresh (gioi han ${staleRefreshBatchLimit}).`);
     } else {
       const processedUserIds = readExistingProcessedUserIds(job.masterFileAbs);
 

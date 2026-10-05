@@ -50,6 +50,7 @@ const {
   timestamp: loanDetailTimestamp,
 } = require('./server/modules/syncLoanDetails.cjs');
 const { LOANS_OUTPUT_DIR, PROJECT_ROOT } = require('./server/utils/outputPaths.cjs');
+const { getSyncConfig, updateSyncConfig } = require('./server/utils/syncConfigStore.cjs');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const net = require('node:net');
@@ -516,6 +517,32 @@ function localSegmentUserSearchPlugin() {
             sendJson(res, 500, {
               success: false,
               message: error?.message || 'Khong the kiem tra do moi du lieu dong bo.',
+            });
+          }
+          return;
+        }
+
+        if (req.method === 'GET' && url.pathname === '/api/sync-config') {
+          try {
+            sendJson(res, 200, { success: true, config: getSyncConfig() });
+          } catch (error) {
+            sendJson(res, 500, {
+              success: false,
+              message: error?.message || 'Khong the lay cau hinh dong bo.',
+            });
+          }
+          return;
+        }
+
+        if (req.method === 'POST' && url.pathname === '/api/sync-config') {
+          try {
+            const body = await readJsonBody(req);
+
+            sendJson(res, 200, { success: true, config: updateSyncConfig(body || {}) });
+          } catch (error) {
+            sendJson(res, 500, {
+              success: false,
+              message: error?.message || 'Khong the luu cau hinh dong bo.',
             });
           }
           return;

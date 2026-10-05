@@ -2,6 +2,7 @@
 
 import { fetchAllOrgUnitUsers, fetchOrgUnitUsers, fetchRoles, removeUserFromOrgUnit } from '../../api/orgUnitsApi.js';
 import ConfirmDialog from '../common/ConfirmDialog.jsx';
+import ThemedSelect from '../common/ThemedSelect.jsx';
 import AddOrgUnitUserModal from './AddOrgUnitUserModal.jsx';
 
 const DEFAULT_FILTERS = {
@@ -653,13 +654,7 @@ function OrgUnitUsersPanel({ selectedOrgUnit }) {
         </label>
         <label>
           <span>Vai trò</span>
-          <select name="roleName" value={filters.roleName} onChange={updateFilter} disabled={rolesLoading}>
-            {roleOptions.map((option) => (
-              <option value={option.value} key={option.value || 'all'}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <ThemedSelect name="roleName" value={filters.roleName} options={roleOptions} onChange={updateFilter} disabled={rolesLoading} />
         </label>
 
         <div className="org-users-filter-actions">

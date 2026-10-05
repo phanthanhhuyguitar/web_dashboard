@@ -43,11 +43,17 @@ function downloadBlob(blob, fileName) {
 const CONTRACT_STATUS_LABELS = {
   SIGNED: 'Đã ký',
   PENDING: 'Chờ ký',
+  NOT_SIGNED: 'Chưa ký',
+  // Tra cuu that that bai (khong tim duoc dung 1 user khop saleId) - PHAI hien thi khac voi
+  // "Chua ky" that, neu khong se khong biet luc nao du lieu dang sai do loi tra cuu chu khong
+  // phai CTV that su chua ky hop dong.
+  LOOKUP_FAILED: 'Không tra được',
 };
 
-// Khong co trang thai ghi nhan (DRAFT, rong, hoac khong tim thay) deu tinh la "Chưa ký".
 function getContractStatusLabel(saleId, contractStatusBySaleId) {
-  return CONTRACT_STATUS_LABELS[contractStatusBySaleId?.[saleId]] || 'Chưa ký';
+  const status = contractStatusBySaleId?.[saleId];
+
+  return CONTRACT_STATUS_LABELS[status] || CONTRACT_STATUS_LABELS.NOT_SIGNED;
 }
 
 function getUserDetailField(saleId, userDetailFieldsBySaleId, field) {
@@ -69,19 +75,26 @@ export async function exportReconciliationHistoryToExcel({
   const sheet = workbook.addWorksheet('Lịch sử đối soát');
 
   sheet.columns = [
-    { header: 'Mã sale', key: 'saleId', width: 16 },
+    // numFmt '@' = ep dinh dang Text - mot so ma sale toan chu so (vd "039235") se bi Excel
+    // hieu nham la "so dang luu dang text" va hien canh bao tam giac xanh neu de dinh dang
+    // "General" mac dinh. Khong doi gia tri, chi bao Excel dung hieu nham.
+    { header: 'Mã sale', key: 'saleId', width: 16, style: { numFmt: '@' } },
     { header: 'Tháng đối soát', key: 'reportMonth', width: 18 },
     { header: 'File', key: 'file', width: 55 },
     { header: 'Ngày tạo', key: 'createdAt', width: 20 },
     { header: 'Ngày cập nhật', key: 'updatedAt', width: 20 },
     { header: 'Trạng thái', key: 'status', width: 16 },
     { header: 'Ký hợp đồng', key: 'contractStatus', width: 18 },
-    { header: 'Số tài khoản TNEX', key: 'bankAccountNumber', width: 22 },
-    { header: 'CCCD', key: 'identityNumber', width: 20 },
+    { header: 'Số tài khoản TNEX', key: 'bankAccountNumber', width: 22, style: { numFmt: '@' } },
+    { header: 'CCCD', key: 'identityNumber', width: 20, style: { numFmt: '@' } },
   ];
 
   const headerRow = sheet.getRow(1);
 
+  // Dat chieu cao co dinh (customHeight) cho ca header lan tung dong du lieu - tranh Excel tu
+  // tinh lai chieu cao khac nhau giua cac dong khi mo file (co the gay cam giac dong "chen"
+  // vao nhau o 1 so trinh xem/zoom level).
+  headerRow.height = 20;
   headerRow.font = { bold: true };
   headerRow.eachCell((cell) => {
     cell.fill = HEADER_FILL;
@@ -99,6 +112,8 @@ export async function exportReconciliationHistoryToExcel({
       bankAccountNumber: getUserDetailField(item.saleId, userDetailFieldsBySaleId, 'bankAccountNumber'),
       identityNumber: getUserDetailField(item.saleId, userDetailFieldsBySaleId, 'identityNumber'),
     });
+
+    row.height = 18;
 
     if (item.reconciliationFile) {
       const fileCell = row.getCell('file');

@@ -57,3 +57,12 @@ export function IconDataQuality() {
     </svg>
   );
 }
+
+export function IconSettings() {
+  return (
+    <svg {...ICON_PROPS}>
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M17.9 6.1l-1.5 1.5M7.6 16.4l-1.5 1.5M17.9 17.9l-1.5-1.5M7.6 7.6 6.1 6.1" />
+    </svg>
+  );
+}

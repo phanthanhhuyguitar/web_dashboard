@@ -1,6 +1,8 @@
 .dashboard-shell {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
-  background: #f5f7fb;
+  background: transparent;
 }
 
 .dashboard-sidebar {
@@ -192,6 +194,9 @@
 .dashboard-main {
   min-height: 100vh;
   margin-left: 250px;
+  /* Phu toan bo chieu cao viewport (khong chi phan noi dung thuc te) - tranh lo nen "dien
+     anh" tho khi trang co it du lieu (VD danh sach rong) ngan hon 100vh. */
+  background: rgba(245, 247, 251, 0.32);
 }
 
 .dashboard-topbar {
@@ -275,12 +280,16 @@
   color: #111827;
   font-size: 30px;
   line-height: 1.12;
+  /* Bao ve tuong phan rieng cho tieu de - de scrim toan trang co the giam mong, nhuong cho
+     nen "dien anh" hien ro hon, ma chu van doc duoc. */
+  text-shadow: 0 1px 12px rgba(255, 255, 255, 0.8);
 }
 
 .dashboard-heading-row p {
   margin: 8px 0 0;
   color: #718096;
   font-size: 14px;
+  text-shadow: 0 1px 10px rgba(255, 255, 255, 0.8);
 }
 
 .period-picker-wrap {
@@ -357,16 +366,24 @@
   font-weight: 800;
 }
 
-.month-picker-header select {
+.month-picker-year-select {
+  width: auto;
+}
+
+.month-picker-year-select .ds-select-trigger {
+  width: auto;
   min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid #d4deec;
-  border-radius: 10px;
+  padding: 0 10px;
   background: #f8fbff;
-  color: #334155;
-  font: inherit;
-  font-weight: 700;
-  outline: none;
+}
+
+.month-picker-year-select .ds-select-options {
+  width: auto;
+  min-width: 92px;
+}
+
+[data-theme='dark'] .month-picker-year-select .ds-select-trigger {
+  background: var(--ds-bg-surface-alt);
 }
 
 .month-picker-header select:focus {
@@ -642,9 +659,11 @@
 }
 
 .state-message {
-  display: grid;
+  display: flex;
   min-height: 120px;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 1px dashed #cbd8ea;
   border-radius: 14px;
   background: #f8fbff;
@@ -888,8 +907,58 @@
 }
 
 .funnel-row p {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin: 0;
   color: #8a9ab3;
+  font-size: 12px;
+}
+
+.funnel-detail-link {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ds-color-primary);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: color var(--ds-duration-fast) var(--ds-ease);
+}
+
+.funnel-detail-link:hover:not(:disabled) {
+  color: var(--ds-color-primary-hover);
+  text-decoration: underline;
+}
+
+.funnel-detail-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.funnel-copy-message {
+  margin: 0;
+  padding: 10px 24px 0;
+  color: var(--ds-color-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.funnel-userid-cell {
+  max-width: 220px;
+  overflow: hidden;
+  color: #64748b;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.funnel-copy-row-button {
+  min-height: 32px;
+  padding: 0 12px;
   font-size: 12px;
 }
 
@@ -1357,12 +1426,16 @@
 }
 
 .top-team-modal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 16px 24px;
   border-bottom: 1px solid #edf2f7;
 }
 
 .top-team-modal-toolbar input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: 42px;
   padding: 0 14px;
   border: 1px solid #d8e2f1;
@@ -1544,6 +1617,8 @@
 }
 
 .dashboard-loading {
+  position: relative;
+  z-index: 1;
   display: grid;
   min-height: 100vh;
   place-content: center;
@@ -1965,7 +2040,14 @@
    du lieu) se van sang khi bat dark mode - mo rong sau.
    ============================================================ */
 
-[data-theme='dark'] .dashboard-shell,
+[data-theme='dark'] .dashboard-shell {
+  background: transparent;
+}
+
+[data-theme='dark'] .dashboard-main {
+  background: rgba(16, 16, 16, 0.38);
+}
+
 [data-theme='dark'] .dashboard-loading {
   background: var(--ds-bg-page);
 }
@@ -2051,10 +2133,12 @@
 
 [data-theme='dark'] .dashboard-heading-row h1 {
   color: var(--ds-text-primary);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.75);
 }
 
 [data-theme='dark'] .dashboard-heading-row p {
   color: var(--ds-text-muted);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.75);
 }
 
 [data-theme='dark'] .period-picker,
@@ -2227,6 +2311,10 @@
 
 [data-theme='dark'] .funnel-row p {
   color: #7c8bab;
+}
+
+[data-theme='dark'] .funnel-userid-cell {
+  color: var(--ds-text-muted);
 }
 
 [data-theme='dark'] .leader-row,

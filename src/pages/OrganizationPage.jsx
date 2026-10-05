@@ -12,6 +12,7 @@ import {
   updateOrgUnit,
 } from '../api/orgUnitsApi.js';
 import ConfirmDialog from '../components/common/ConfirmDialog.jsx';
+import ThemedSelect from '../components/common/ThemedSelect.jsx';
 import Sidebar from '../components/layout/Sidebar.jsx';
 import Topbar from '../components/layout/Topbar.jsx';
 import MoveOrgUnitMembersModal from '../components/organization/MoveOrgUnitMembersModal.jsx';
@@ -779,21 +780,16 @@ function OrgUnitCreateModal({ parentOrgUnit, onClose, onSuccess, onToast }) {
                 <span>
                   Role <strong>*</strong>
                 </span>
-                <select
+                <ThemedSelect
                   value={selectedRoleId}
+                  options={roleOptions}
                   onChange={(event) => {
                     setSelectedRoleId(event.target.value);
                     setErrors((current) => ({ ...current, role: '' }));
                   }}
                   disabled={roleLoading || submitLoading}
-                >
-                  <option value="">{roleLoading ? 'Đang tải role...' : 'Chọn role'}</option>
-                  {roleOptions.map((role) => (
-                    <option value={role.value} key={role.value}>
-                      {role.label}
-                    </option>
-                  ))}
-                </select>
+                  placeholder={roleLoading ? 'Đang tải role...' : 'Chọn role'}
+                />
                 {errors.role ? <strong className="add-org-user-error">{errors.role}</strong> : null}
               </label>
 
@@ -801,20 +797,15 @@ function OrgUnitCreateModal({ parentOrgUnit, onClose, onSuccess, onToast }) {
                 <span>
                   Scope <strong>*</strong>
                 </span>
-                <select
+                <ThemedSelect
                   value={scope}
+                  options={SCOPE_OPTIONS.map((option) => ({ value: option, label: option }))}
                   onChange={(event) => {
                     setScope(event.target.value);
                     setErrors((current) => ({ ...current, scope: '' }));
                   }}
                   disabled={submitLoading}
-                >
-                  {SCOPE_OPTIONS.map((option) => (
-                    <option value={option} key={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                />
                 {errors.scope ? <strong className="add-org-user-error">{errors.scope}</strong> : null}
               </label>
             </div>

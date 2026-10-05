@@ -146,6 +146,15 @@ function getDb() {
     );
     CREATE INDEX IF NOT EXISTS idx_notifications_type_sourceKey ON notifications(type, sourceKey);
     CREATE INDEX IF NOT EXISTS idx_notifications_isRead ON notifications(isRead);
+
+    -- Cau hinh tuy chinh cho cac job dong bo (delay, concurrency, gioi han batch...) - chinh
+    -- qua trang Cai dat (SettingsPage.jsx). Chi 1 dong duy nhat (key='tuning'), value la 1 JSON
+    -- blob - xem syncConfigStore.cjs.
+    CREATE TABLE IF NOT EXISTS sync_config (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
   `);
 
   // Migration: bang notifications co the da ton tai truoc khi co cot `meta` (CREATE TABLE IF

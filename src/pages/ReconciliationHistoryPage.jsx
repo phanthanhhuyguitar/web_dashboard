@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { fetchAllReconciliationHistory, fetchReconciliationHistory } from '../api/reconciliationsApi.js';
-import { fetchContractStatusBySaleId } from '../api/userContractStatusApi.js';
-import { fetchUserDetailFieldsBySaleId } from '../api/userDetailFieldsApi.js';
+import { fetchUserIdBySaleId, fetchUserProfileById } from '../api/usersApi.js';
 import ConfirmDialog from '../components/common/ConfirmDialog.jsx';
 import MonthPicker from '../components/common/MonthPicker.jsx';
+import ThemedSelect from '../components/common/ThemedSelect.jsx';
 import Sidebar from '../components/layout/Sidebar.jsx';
 import Topbar from '../components/layout/Topbar.jsx';
+import { useAppSettings } from '../context/AppSettingsContext.jsx';
 import { formatDateTime } from '../utils/date.js';
 import { exportReconciliationHistoryToExcel } from '../utils/reconciliationExport.js';
+import { runRateLimitedQueue } from '../utils/rateLimitedQueue.js';
 import { clearAccessToken } from '../utils/storage.js';
 
 const PAGE_SIZE = 10;
@@ -100,6 +102,7 @@ function ExportMetric({ label, value }) {
 
 function ReconciliationHistoryPage() {
   const navigate = useNavigate();
+  const { settings } = useAppSettings();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
@@ -111,6 +114,10 @@ function ReconciliationHistoryPage() {
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
+  // Doc trong worker cua runRateLimitedQueue (dang chay ben trong 1 Promise cu) - phai dung ref,
+  // state React thuong se bi "dong bang" gia tri cu do closure, khong thay duoc lan bam nut sau.
+  const exportPausedRef = useRef(false);
+  const exportCancelledRef = useRef(false);
 
   const runSearch = async (nextPage = 1) => {
     setLoading(true);
@@ -180,15 +187,31 @@ function ReconciliationHistoryPage() {
     setExportModalOpen(false);
   };
 
+  const handleTogglePauseExport = () => {
+    exportPausedRef.current = !exportPausedRef.current;
+    setExportProgress((current) => (current ? { ...current, status: exportPausedRef.current ? 'PAUSED' : 'RUNNING' } : current));
+  };
+
+  const handleCancelExport = () => {
+    exportCancelledRef.current = true;
+    exportPausedRef.current = false;
+    setExportProgress((current) => (current ? { ...current, status: 'RUNNING', cancelling: true } : current));
+  };
+
   const confirmExport = async () => {
     setExportModalOpen(false);
     setExporting(true);
+    exportPausedRef.current = false;
+    exportCancelledRef.current = false;
     setExportProgress({
+      phase: 'FETCH',
       status: 'RUNNING',
       fetchedCount: 0,
       totalElements,
       currentPage: 0,
       totalPages: 0,
+      enrichedCount: 0,
+      enrichTotal: 0,
     });
 
     try {
@@ -205,12 +228,86 @@ function ReconciliationHistoryPage() {
         },
       );
 
-      // Neu khong lay duoc (vd chua sync du lieu user) thi van xuat file binh thuong, chi thieu
-      // cac cot bo sung nay - tranh lam gian doan ca tinh nang chi vi thieu du lieu enrich.
-      const [contractStatusBySaleId, userDetailFieldsBySaleId] = await Promise.all([
-        fetchContractStatusBySaleId().catch(() => ({})),
-        fetchUserDetailFieldsBySaleId().catch(() => ({})),
-      ]);
+      if (exportCancelledRef.current) {
+        setExportProgress(null);
+        setToastMessage({ type: 'warning', text: 'Đã dừng xuất file theo yêu cầu.' });
+        return;
+      }
+
+      // Tra thong tin CTV (so tai khoan, CCCD, trang thai hop dong) TRUC TIEP tu API that theo
+      // saleId -> userId -> profile, KHONG dung du lieu dong bo local - tranh rui ro mã sale da
+      // doi sang nguoi khac ma local chua kip cap nhat (lay nham so tai khoan chuyen tien).
+      const uniqueSaleIds = Array.from(new Set(result.items.map((item) => item.saleId).filter(Boolean)));
+      const contractStatusBySaleId = {};
+      const userDetailFieldsBySaleId = {};
+
+      if (uniqueSaleIds.length > 0) {
+        setExportProgress((current) => ({
+          ...current,
+          phase: 'ENRICH',
+          status: 'RUNNING',
+          enrichedCount: 0,
+          enrichTotal: uniqueSaleIds.length,
+        }));
+
+        const enrichResults = await runRateLimitedQueue(uniqueSaleIds, {
+          concurrency: settings.exportEnrichConcurrency,
+          delayMs: settings.exportEnrichDelayMs,
+          isPaused: () => exportPausedRef.current,
+          isCancelled: () => exportCancelledRef.current,
+          onProgress: (done, total) => {
+            setExportProgress((current) => (current ? { ...current, enrichedCount: done, enrichTotal: total } : current));
+          },
+          taskFn: async (saleId) => {
+            // QUAN TRONG: phan biet ro "khong tra duoc user" (loi tim kiem/khong khop) voi
+            // "tra duoc user nhung chua ky hop dong" - 2 truong hop nay KHONG duoc hien thi
+            // giong nhau, neu khong se khong biet duoc khi nao du lieu dang sai do loi tra cuu.
+            const idInfo = await fetchUserIdBySaleId(saleId).catch(() => null);
+
+            if (!idInfo?.userId) {
+              return { saleId, lookupFailed: true, contractStatus: null, bankAccountNumber: '', identityNumber: '' };
+            }
+
+            const profile = await fetchUserProfileById(idInfo.userId).catch(() => null);
+
+            return {
+              saleId,
+              lookupFailed: false,
+              profileFailed: !profile,
+              contractStatus: idInfo.contractStatus,
+              bankAccountNumber: profile?.bankAccountNumber || '',
+              identityNumber: profile?.identityNumber || '',
+            };
+          },
+        });
+
+        enrichResults.forEach(({ value }) => {
+          if (!value) return;
+
+          if (value.lookupFailed) {
+            contractStatusBySaleId[value.saleId] = 'LOOKUP_FAILED';
+            userDetailFieldsBySaleId[value.saleId] = { bankAccountNumber: 'Không tra được', identityNumber: 'Không tra được' };
+            return;
+          }
+
+          contractStatusBySaleId[value.saleId] = value.contractStatus || 'NOT_SIGNED';
+          userDetailFieldsBySaleId[value.saleId] = {
+            bankAccountNumber: value.profileFailed ? 'Lỗi tra cứu' : value.bankAccountNumber,
+            identityNumber: value.profileFailed ? 'Lỗi tra cứu' : value.identityNumber,
+          };
+        });
+      }
+
+      if (exportCancelledRef.current) {
+        setExportProgress(null);
+        setToastMessage({
+          type: 'warning',
+          text: `Đã dừng xuất file theo yêu cầu - chưa tạo file Excel (đã tra được ${Object.keys(userDetailFieldsBySaleId).length}/${uniqueSaleIds.length} CTV).`,
+        });
+        return;
+      }
+
+      setExportProgress((current) => (current ? { ...current, phase: 'BUILD', status: 'RUNNING' } : current));
 
       await exportReconciliationHistoryToExcel({
         items: result.items,
@@ -221,14 +318,14 @@ function ReconciliationHistoryPage() {
         userDetailFieldsBySaleId,
       });
 
-      setExportProgress((current) => ({ ...current, status: 'COMPLETED' }));
+      setExportProgress((current) => (current ? { ...current, status: 'COMPLETED' } : current));
       setToastMessage({ type: 'success', text: `Đã xuất ${result.items.length} bản ghi ra file Excel.` });
 
       window.setTimeout(() => {
         setExportProgress(null);
       }, 2500);
     } catch (exportError) {
-      setExportProgress((current) => ({ ...current, status: 'FAILED' }));
+      setExportProgress((current) => (current ? { ...current, status: 'FAILED' } : current));
       setToastMessage({
         type: 'error',
         text: getApiErrorMessage(exportError, 'Xuất file Excel thất bại. Vui lòng thử lại.'),
@@ -240,15 +337,32 @@ function ReconciliationHistoryPage() {
 
   const paginationItems = getPaginationItems(page, totalPages);
   const totalElementsLabel = totalElements.toLocaleString('vi-VN');
-  const exportPercent = exportProgress?.totalElements
-    ? Math.min(Math.round((exportProgress.fetchedCount / exportProgress.totalElements) * 100), 100)
-    : 0;
+  const isEnrichPhase = exportProgress?.phase === 'ENRICH';
+  const exportPercent = isEnrichPhase
+    ? exportProgress?.enrichTotal
+      ? Math.min(Math.round((exportProgress.enrichedCount / exportProgress.enrichTotal) * 100), 100)
+      : 0
+    : exportProgress?.totalElements
+      ? Math.min(Math.round((exportProgress.fetchedCount / exportProgress.totalElements) * 100), 100)
+      : 0;
   const exportProgressTitle =
     exportProgress?.status === 'COMPLETED'
       ? 'Xuất file Excel hoàn tất'
       : exportProgress?.status === 'FAILED'
         ? 'Xuất file Excel thất bại'
-        : 'Đang xuất file Excel...';
+        : exportProgress?.status === 'PAUSED'
+          ? 'Đã tạm dừng tra cứu CTV'
+          : exportProgress?.cancelling
+            ? 'Đang dừng lại...'
+            : isEnrichPhase
+              ? 'Đang tra cứu thông tin CTV (API thật)...'
+              : exportProgress?.phase === 'BUILD'
+                ? 'Đang tạo file Excel...'
+                : 'Đang tải dữ liệu đối soát...';
+  // Nut Tam dung/Dung lai chi hien o pha tra cuu CTV - day la pha goi API that theo tung nguoi,
+  // noi nguoi dung can chu dong can thiep neu thay bat thuong (khac pha tai danh sach doi soat
+  // ban dau, von da an toan tu truoc).
+  const showEnrichControls = exporting && isEnrichPhase && !['COMPLETED', 'FAILED'].includes(exportProgress?.status);
 
   return (
     <div className="dashboard-shell">
@@ -297,13 +411,11 @@ function ReconciliationHistoryPage() {
               </label>
               <label className="segment-field">
                 <span>Trạng thái</span>
-                <select value={filters.status} onChange={(event) => updateFilter('status', event.target.value)}>
-                  {STATUS_OPTIONS.map((option) => (
-                    <option value={option.value} key={option.value || 'ALL'}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <ThemedSelect
+                  value={filters.status}
+                  options={STATUS_OPTIONS}
+                  onChange={(event) => updateFilter('status', event.target.value)}
+                />
               </label>
             </div>
             <div className="segment-filter-actions">
@@ -339,7 +451,13 @@ function ReconciliationHistoryPage() {
                     <div className="segment-sync-title-row">
                       <h2>{exportProgressTitle}</h2>
                     </div>
-                    <p>Hệ thống đang tải dữ liệu theo từng trang (50 bản ghi/lần) để tránh quá tải server.</p>
+                    <p>
+                      {isEnrichPhase
+                        ? 'Đang gọi API thật lấy thông tin từng CTV (không dùng dữ liệu đồng bộ local) - có thể tạm dừng hoặc dừng hẳn bất kỳ lúc nào.'
+                        : exportProgress.phase === 'BUILD'
+                          ? 'Đang dựng file Excel trên trình duyệt.'
+                          : 'Hệ thống đang tải dữ liệu theo từng trang (50 bản ghi/lần) để tránh quá tải server.'}
+                    </p>
                   </div>
                   <strong>{exportPercent}%</strong>
                 </div>
@@ -347,9 +465,34 @@ function ReconciliationHistoryPage() {
                   <span style={{ width: `${exportPercent}%` }} />
                 </div>
                 <div className="segment-sync-metrics">
-                  <ExportMetric label="Đã tải" value={`${exportProgress.fetchedCount || 0} / ${exportProgress.totalElements || 0} bản ghi`} />
-                  <ExportMetric label="Trang hiện tại" value={exportProgress.currentPage || 0} />
+                  {isEnrichPhase ? (
+                    <>
+                      <ExportMetric label="Đã tra cứu CTV" value={`${exportProgress.enrichedCount || 0} / ${exportProgress.enrichTotal || 0}`} />
+                      <ExportMetric label="Số luồng" value={settings.exportEnrichConcurrency} />
+                      <ExportMetric label="Delay/luồng" value={`${settings.exportEnrichDelayMs}ms`} />
+                    </>
+                  ) : (
+                    <>
+                      <ExportMetric label="Đã tải" value={`${exportProgress.fetchedCount || 0} / ${exportProgress.totalElements || 0} bản ghi`} />
+                      <ExportMetric label="Trang hiện tại" value={exportProgress.currentPage || 0} />
+                    </>
+                  )}
                 </div>
+
+                {showEnrichControls ? (
+                  <div className="segment-sync-controls">
+                    <button
+                      className="segment-secondary-button ds-button ds-button-secondary"
+                      type="button"
+                      onClick={handleTogglePauseExport}
+                    >
+                      {exportProgress.status === 'PAUSED' ? 'Tiếp tục tra cứu' : 'Tạm dừng tra cứu'}
+                    </button>
+                    <button className="segment-danger-button" type="button" onClick={handleCancelExport} disabled={exportProgress.cancelling}>
+                      {exportProgress.cancelling ? 'Đang dừng...' : 'Dừng lại'}
+                    </button>
+                  </div>
+                ) : null}
               </section>
             ) : null}
 

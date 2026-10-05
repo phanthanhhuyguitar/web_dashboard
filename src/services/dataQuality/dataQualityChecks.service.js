@@ -138,6 +138,50 @@ function checkTeamStructure(teams, users) {
   };
 }
 
+// E2. Team thieu hoac trung vai tro quan ly - khong ai giu Lead/BM, hoac >=2 nguoi cung giu
+// vai tro quan ly (Lead/BM) trong cung 1 to chuc. Dung lai du lieu teams (da co san tu
+// fetchManageTeamsWithUsers), khong goi them API.
+const MANAGEMENT_ROLE_NAMES = new Set(['Lead', 'BM']);
+
+function checkTeamManagementRoles(teams) {
+  const missing = [];
+  const duplicated = [];
+
+  teams.forEach((team) => {
+    const managers = (team?.users || []).filter((user) => MANAGEMENT_ROLE_NAMES.has(user?.roleName));
+
+    if (managers.length === 0) {
+      missing.push(team);
+    } else if (managers.length >= 2) {
+      duplicated.push({ team, managers });
+    }
+  });
+
+  const count = missing.length + duplicated.length;
+
+  const samples = [
+    ...missing.map((team) => ({
+      label: team?.teamName || String(team?.orgUnitId ?? ''),
+      detail: 'Không có ai giữ vai trò Lead hoặc BM',
+    })),
+    ...duplicated.map(({ team, managers }) => ({
+      label: team?.teamName || String(team?.orgUnitId ?? ''),
+      detail: `${managers.length} người cùng giữ vai trò quản lý: ${managers
+        .map((manager) => `${manager.name || manager.phoneNumber || '(không tên)'} (${manager.roleName})`)
+        .join(', ')}`,
+    })),
+  ];
+
+  return {
+    id: 'team-management-roles',
+    title: 'Team thiếu hoặc trùng vai trò quản lý',
+    description: 'Team không có ai giữ vai trò Lead/BM, hoặc có từ 2 người trở lên cùng giữ vai trò quản lý (Lead/BM) trong cùng một tổ chức.',
+    severity: count > 0 ? 'warning' : 'info',
+    count,
+    samples,
+  };
+}
+
 // F. Du lieu dong bo local (Segment) qua cu - dua tren thoi gian sua file lay tu
 // /api/data-quality/sync-freshness (server/modules/dataQualityStatus.cjs).
 function checkSyncFreshness(freshness, { staleDays = 7 } = {}) {
@@ -181,14 +225,15 @@ function checkSyncFreshness(freshness, { staleDays = 7 } = {}) {
 
 const SEVERITY_ORDER = { error: 0, warning: 1, info: 2 };
 
-export function runDataQualityChecks({ loans = [], users = [], teams = [], syncFreshness = null }) {
+export function runDataQualityChecks({ loans = [], users = [], teams = [], syncFreshness = null, staleDays = 7 }) {
   const results = [
     checkOrphanedLoans(loans, users),
     checkInvalidDates(loans, users),
     checkTeamStructure(teams, users),
+    checkTeamManagementRoles(teams),
     checkUsersMissingSaleId(users),
     checkLoansWithoutOwner(loans),
-    checkSyncFreshness(syncFreshness),
+    checkSyncFreshness(syncFreshness, { staleDays }),
   ];
 
   return results.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);

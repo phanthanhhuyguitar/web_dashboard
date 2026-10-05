@@ -17,19 +17,33 @@ const {
 const { upsertLoans, getLoanSyncInfoMap } = require('../utils/loanStore.cjs');
 const { upsertLoanEventsFromDetail } = require('../utils/loanStoreV2.cjs');
 const { createSyncCompletedNotification, createSyncFailedNotification } = require('./notificationStore.cjs');
+const { getSyncConfig } = require('../utils/syncConfigStore.cjs');
 
 const DEFAULT_API_BASE_URL = 'https://api-gw-ds.tnex.com.vn';
 const DEFAULT_LOAN_DETAIL_ENDPOINT = '/digital-sale-admin/api/v1/admin/loans/detail';
 const LOAN_DETAIL_MASTER_FILE = path.join(LOANS_OUTPUT_DIR, 'list_loan_detail_all.txt');
 const LOAN_DETAIL_STATUS_FILE = path.join(LOANS_OUTPUT_DIR, 'sync_loan_detail_job_status.json');
-const LOAN_DETAIL_CONFIG = {
+// Web nay chi 1 nguoi dung - da giam delay mac dinh de dong bo nhanh hon. "let" vi
+// delayBetweenRequestsMs duoc doc lai tu SQLite (trang Cai dat) truoc moi lan chay job qua
+// refreshLoanDetailTuningConfig(), khong can restart process.
+let LOAN_DETAIL_CONFIG = {
   concurrency: 1,
-  delayBetweenRequestsMs: Number(process.env.LOAN_DETAIL_DELAY_MS || 500),
+  delayBetweenRequestsMs: Number(process.env.LOAN_DETAIL_DELAY_MS || 150),
   timeoutMs: Number(process.env.LOAN_DETAIL_TIMEOUT_MS || 15000),
   maxRetries: Number(process.env.LOAN_DETAIL_MAX_RETRIES || 0),
   retryDelayMs: Number(process.env.LOAN_DETAIL_RETRY_DELAY_MS || 1000),
   logEvery: Number(process.env.LOAN_DETAIL_LOG_EVERY || 50),
 };
+
+function refreshLoanDetailTuningConfig() {
+  const tuning = getSyncConfig();
+
+  LOAN_DETAIL_CONFIG = {
+    ...LOAN_DETAIL_CONFIG,
+    delayBetweenRequestsMs: tuning.loanDetailDelayMs,
+    concurrency: tuning.loanDetailConcurrency,
+  };
+}
 
 function timestamp() {
   const d = new Date();
@@ -375,6 +389,8 @@ async function runSyncLoanDetailsJob(job, token, { writeStatus } = {}) {
   let failedStream = null;
   const startMs = Date.now();
 
+  refreshLoanDetailTuningConfig();
+
   try {
     ensureDir(LOANS_OUTPUT_DIR);
     ensureDir(path.dirname(job.masterFileAbs));
@@ -406,8 +422,10 @@ async function runSyncLoanDetailsJob(job, token, { writeStatus } = {}) {
     let remainingLoans;
 
     if (isSqliteStoreEnabled()) {
+      const tuning = getSyncConfig();
+      const staleRefreshBatchLimit = tuning.staleRefreshBatchLimit ?? getStaleRefreshBatchLimit();
       const syncInfoMap = getLoanSyncInfoMap();
-      const staleCutoffMs = Date.now() - getStaleRefreshDays() * 24 * 60 * 60 * 1000;
+      const staleCutoffMs = Date.now() - (tuning.staleRefreshDays ?? getStaleRefreshDays()) * 24 * 60 * 60 * 1000;
       const newLoans = uniqueInput.filter((loan) => !syncInfoMap.has(loan.loanId));
       const staleLoans = uniqueInput
         .filter((loan) => {
@@ -417,10 +435,10 @@ async function runSyncLoanDetailsJob(job, token, { writeStatus } = {}) {
 
           return Number.isFinite(syncedAtMs) && syncedAtMs < staleCutoffMs;
         })
-        .slice(0, getStaleRefreshBatchLimit());
+        .slice(0, staleRefreshBatchLimit);
 
       remainingLoans = [...newLoans, ...staleLoans];
-      logLine(job, `SQLite store: ${newLoans.length} loan moi, ${staleLoans.length} loan cu can refresh (gioi han ${getStaleRefreshBatchLimit()}).`);
+      logLine(job, `SQLite store: ${newLoans.length} loan moi, ${staleLoans.length} loan cu can refresh (gioi han ${staleRefreshBatchLimit}).`);
     } else {
       remainingLoans = uniqueInput.filter((loan) => !seenKeys.has(loan.detailKey));
     }
@@ -479,84 +497,108 @@ async function runSyncLoanDetailsJob(job, token, { writeStatus } = {}) {
       return;
     }
 
-    for (const loan of remainingLoans) {
-      await waitIfPaused(job);
-      assertJobCanContinue(job);
+    // Chay song song that qua hang doi dung chung (giong het pattern da dung cho USER_DETAIL) -
+    // moi worker tu rut 1 loan tu queue, xu ly, roi cho dung delay CUA RIENG worker do truoc
+    // khi lay item tiep theo. Tong toc do goi API ~ concurrency / delay, van co kiem soat chu
+    // khong ban ra dong loat khong gioi han.
+    const queue = [...remainingLoans];
 
-      job.currentLoanId = loan.loanId;
-      job.currentMessage = `Dang lay chi tiet don vay ${job.done + 1}/${job.totalNeedSync}...`;
-      updateStatus(job, writeStatus);
-
-      try {
-        const detail = await requestLoanDetail({
-          token,
-          loanId: loan.loanId,
-          customerPhoneNumber: loan.customerPhoneNumber,
-        });
-
+    const runWorker = async (workerId) => {
+      while (queue.length > 0) {
+        await waitIfPaused(job);
         assertJobCanContinue(job);
-        appendJsonLineToFile(job.masterFileAbs, detail);
-        appendJsonLine(snapshotStream, detail);
 
-        if (isSqliteStoreEnabled()) {
-          // detail la object bao {loanId, customerPhoneNumber, detail, rawResponse, syncedAt} -
-          // gop loanId chac chan co voi cac field ben trong detail.detail de upsert dung.
-          const detailPayload = detail?.detail && typeof detail.detail === 'object' ? detail.detail : {};
+        // Loi fatal (auth het han...) duoc 1 worker phat hien va ghi vao job.fatalError - cac
+        // worker khac se tu dung o vong lap ke tiep cua chinh no thay vi tiep tuc ban API.
+        if (job.fatalError) throw job.fatalError;
 
-          upsertLoans([{ loanId: loan.loanId, ...detailPayload }]);
-        }
+        const loan = queue.shift();
 
-        // Luon ghi them vao bang loan_events (nguon SQLite moi, duy nhat con duoc app doc).
-        upsertLoanEventsFromDetail(loan.loanId, detail?.detail);
+        if (!loan) return;
 
-        seenKeys.add(loan.detailKey);
-        job.successCount += 1;
-        job.totalInMaster = seenKeys.size;
-      } catch (error) {
-        if (error?.status === 401 || error?.status === 403) {
+        job.currentLoanId = loan.loanId;
+        job.currentMessage = `Dang lay chi tiet don vay ${job.done + 1}/${job.totalNeedSync}...`;
+        updateStatus(job, writeStatus);
+
+        try {
+          const detail = await requestLoanDetail({
+            token,
+            loanId: loan.loanId,
+            customerPhoneNumber: loan.customerPhoneNumber,
+          });
+
+          assertJobCanContinue(job);
+          appendJsonLineToFile(job.masterFileAbs, detail);
+          appendJsonLine(snapshotStream, detail);
+
+          if (isSqliteStoreEnabled()) {
+            // detail la object bao {loanId, customerPhoneNumber, detail, rawResponse, syncedAt} -
+            // gop loanId chac chan co voi cac field ben trong detail.detail de upsert dung.
+            const detailPayload = detail?.detail && typeof detail.detail === 'object' ? detail.detail : {};
+
+            upsertLoans([{ loanId: loan.loanId, ...detailPayload }]);
+          }
+
+          // Luon ghi them vao bang loan_events (nguon SQLite moi, duy nhat con duoc app doc).
+          upsertLoanEventsFromDetail(loan.loanId, detail?.detail);
+
+          seenKeys.add(loan.detailKey);
+          job.successCount += 1;
+          job.totalInMaster = seenKeys.size;
+        } catch (error) {
+          if (error?.status === 401 || error?.status === 403) {
+            appendJsonLine(failedStream, {
+              loanId: loan.loanId,
+              customerPhoneNumber: loan.customerPhoneNumber,
+              reason: 'AUTH_ERROR',
+              message: error.message,
+              failedAt: new Date().toISOString(),
+            });
+            job.failedCount += 1;
+            job.fatalError = error;
+            throw error;
+          }
+
           appendJsonLine(failedStream, {
             loanId: loan.loanId,
             customerPhoneNumber: loan.customerPhoneNumber,
-            reason: 'AUTH_ERROR',
+            reason: 'API_ERROR',
             message: error.message,
             failedAt: new Date().toISOString(),
           });
           job.failedCount += 1;
-          throw error;
+          logLine(job, `[${job.done + 1}/${job.totalNeedSync}] Worker ${workerId} | ERROR ${loan.loanId} | ${error.message}`);
         }
 
-        appendJsonLine(failedStream, {
-          loanId: loan.loanId,
-          customerPhoneNumber: loan.customerPhoneNumber,
-          reason: 'API_ERROR',
-          message: error.message,
-          failedAt: new Date().toISOString(),
-        });
-        job.failedCount += 1;
-        logLine(job, `[${job.done + 1}/${job.totalNeedSync}] ERROR ${loan.loanId} | ${error.message}`);
+        job.done += 1;
+        const elapsed = Math.max((Date.now() - startMs) / 1000, 0.001);
+        job.speed = Math.round((job.done / elapsed) * 100) / 100;
+        job.progress = getProgress(job.done, job.totalNeedSync);
+        job.currentMessage = `Da xu ly ${job.done}/${job.totalNeedSync} don vay chi tiet. Thanh cong: ${job.successCount}, loi: ${job.failedCount}.`;
+
+        if (job.done <= 10 || job.done % LOAN_DETAIL_CONFIG.logEvery === 0 || job.done === job.totalNeedSync) {
+          logLine(
+            job,
+            `[${job.done}/${job.totalNeedSync}] Worker ${workerId} | success: ${job.successCount} | failed: ${job.failedCount} | skipped: ${job.skippedMissingCount} | speed: ${job.speed} req/s`
+          );
+        }
+
+        updateStatus(job, writeStatus);
+
+        if (LOAN_DETAIL_CONFIG.delayBetweenRequestsMs > 0 && queue.length > 0) {
+          await waitIfPaused(job);
+          assertJobCanContinue(job);
+          await sleep(LOAN_DETAIL_CONFIG.delayBetweenRequestsMs);
+        }
       }
+    };
 
-      job.done += 1;
-      const elapsed = Math.max((Date.now() - startMs) / 1000, 0.001);
-      job.speed = Math.round((job.done / elapsed) * 100) / 100;
-      job.progress = getProgress(job.done, job.totalNeedSync);
-      job.currentMessage = `Da xu ly ${job.done}/${job.totalNeedSync} don vay chi tiet. Thanh cong: ${job.successCount}, loi: ${job.failedCount}.`;
+    const workerCount = Math.min(LOAN_DETAIL_CONFIG.concurrency, remainingLoans.length);
+    const workers = Array.from({ length: workerCount }, (_, index) => runWorker(index + 1));
 
-      if (job.done <= 10 || job.done % LOAN_DETAIL_CONFIG.logEvery === 0 || job.done === job.totalNeedSync) {
-        logLine(
-          job,
-          `[${job.done}/${job.totalNeedSync}] success: ${job.successCount} | failed: ${job.failedCount} | skipped: ${job.skippedMissingCount} | speed: ${job.speed} req/s`
-        );
-      }
+    await Promise.all(workers);
 
-      updateStatus(job, writeStatus);
-
-      if (LOAN_DETAIL_CONFIG.delayBetweenRequestsMs > 0 && job.done < job.totalNeedSync) {
-        await waitIfPaused(job);
-        assertJobCanContinue(job);
-        await sleep(LOAN_DETAIL_CONFIG.delayBetweenRequestsMs);
-      }
-    }
+    if (job.fatalError) throw job.fatalError;
 
     await endStream(snapshotStream);
     await endStream(failedStream);

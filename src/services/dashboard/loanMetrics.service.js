@@ -239,7 +239,10 @@ export function buildProductFunnelData(loans, { fromDate, toDate }) {
 
   loans.forEach((loan) => {
     if (!isValidOwnerSaleId(loan.ownerSaleId)) return;
-    if (!isDateInRange(loan.createdAt, { fromDate, toDate })) return;
+    // Loc theo updatedAt (thoi diem doi trang thai gan nhat), khong dung createdAt (ngay tao
+    // don) - funnel phan anh trang thai HIEN TAI cua don, nen phai khop voi thoi diem don ROI
+    // VAO trang thai do, khong phai thoi diem don duoc tao ra.
+    if (!isDateInRange(loan.updatedAt, { fromDate, toDate })) return;
 
     const row = statusMap.get(loan.status);
 
@@ -440,5 +443,70 @@ export function calculateCtvOrdersCreatedInRange(loans, users = [], range) {
       rank: index + 1,
       ...item,
       latestCreatedAt: item.latestCreatedAt ? item.latestCreatedAt.toISOString() : null,
+    }));
+}
+
+function getUserId(user) {
+  return String(user?.id || user?.userId || '').trim();
+}
+
+// Danh sach CTV co don dang o 1 trang thai funnel cu the (vd FORSIGN - cho ky HD), loc theo
+// CUNG dieu kien voi buildProductFunnelData (updatedAt trong ky, co ownerSaleId hop le) - dung
+// cho modal "Chi tiet" tren FunnelCard, kem userId de copy phuc vu gui thong bao.
+export function calculateFunnelStatusCtvList(loans, users = [], status, range) {
+  const { fromDate, toDate } = range || {};
+  const saleIdToUser = new Map();
+  const groupedBySaleId = new Map();
+
+  users.forEach((user) => {
+    const saleId = normalizeSaleId(user?.saleId);
+
+    if (!saleId) return;
+
+    saleIdToUser.set(saleId, user);
+  });
+
+  loans.forEach((loan) => {
+    if (!isValidOwnerSaleId(loan.ownerSaleId)) return;
+    if (loan.status !== status) return;
+    if (!isDateInRange(loan.updatedAt, { fromDate, toDate })) return;
+
+    const saleId = normalizeSaleId(loan.ownerSaleId);
+
+    if (!groupedBySaleId.has(saleId)) {
+      const user = saleIdToUser.get(saleId);
+      const displayName = getTopCtvDisplayName(user, saleId);
+
+      groupedBySaleId.set(saleId, {
+        ownerSaleId: saleId,
+        userId: getUserId(user),
+        displayName,
+        displayLabel: user ? `${displayName} / ${saleId}` : saleId,
+        phoneNumber: user?.phoneNumber || '',
+        loanCount: 0,
+        latestUpdatedAt: null,
+      });
+    }
+
+    const item = groupedBySaleId.get(saleId);
+    const updatedAt = parseDateValue(loan.updatedAt);
+
+    item.loanCount += 1;
+
+    if (updatedAt && (!item.latestUpdatedAt || updatedAt > item.latestUpdatedAt)) {
+      item.latestUpdatedAt = updatedAt;
+    }
+  });
+
+  return Array.from(groupedBySaleId.values())
+    .sort((a, b) => {
+      if (b.loanCount !== a.loanCount) return b.loanCount - a.loanCount;
+
+      return a.ownerSaleId.localeCompare(b.ownerSaleId);
+    })
+    .map((item, index) => ({
+      rank: index + 1,
+      ...item,
+      latestUpdatedAt: item.latestUpdatedAt ? item.latestUpdatedAt.toISOString() : null,
     }));
 }
