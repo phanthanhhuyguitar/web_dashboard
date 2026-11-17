@@ -45,11 +45,7 @@ function normalizeUsersResponse(responseData) {
     'totalElements',
     'total',
   ]);
-  const totalPages = getFirstValue(responseData, [
-    'data.pagination.totalPages',
-    'data.totalPages',
-    'totalPages',
-  ]);
+  const totalPages = getFirstValue(responseData, ['data.pagination.totalPages', 'data.totalPages', 'totalPages']);
 
   return {
     users: Array.isArray(users) ? users : [users],
@@ -91,10 +87,9 @@ export async function fetchAllUsers({ filter = {}, size = DEFAULT_PAGE_SIZE } = 
     return usersInFlight.get(cacheKey);
   }
 
-  const request = fetchAllUsersUncached({ filter, size })
-    .finally(() => {
-      usersInFlight.delete(cacheKey);
-    });
+  const request = fetchAllUsersUncached({ filter, size }).finally(() => {
+    usersInFlight.delete(cacheKey);
+  });
 
   usersInFlight.set(cacheKey, request);
   return request;
@@ -215,9 +210,7 @@ export async function fetchUserIdBySaleId(saleId) {
     if (match) {
       const userId = extractUserIdFromRaw(match);
 
-      return userId
-        ? { userId, contractStatus: valueToText(match?.contractStatus).toUpperCase() || null }
-        : null;
+      return userId ? { userId, contractStatus: valueToText(match?.contractStatus).toUpperCase() || null } : null;
     }
 
     if (users.length === 0 || (totalPages !== null && page + 1 >= totalPages)) break;
@@ -257,4 +250,35 @@ export async function fetchUserProfileById(userId) {
     bankAccountNumber: valueToText(detail?.bankInfo?.accountNumber),
     identityNumber: valueToText(detail?.identity?.identityNumber),
   };
+}
+
+// ---- Ngay gia nhap 1 to chuc (org) cua 1 user - dung cho preview doi soat Team Lead, de loai
+// nhung don giai ngan TRUOC ngay thanh vien do gia nhap team khoi doanh so quy doi (xem
+// teamReconciliationApi.js). Cung goi USER_DETAIL_ENDPOINT nhu fetchUserProfileById nhung doc
+// them field "orgInfos" (API chi tiet tra ve mang orgInfos[].{orgId, createdAt, ...}, khong co o
+// API danh sach thanh vien org-units/users). ----
+
+export async function fetchUserOrgInfos(userId) {
+  const response = await axiosClient.get(USER_DETAIL_ENDPOINT, { params: { id: userId } });
+  const detail = normalizeProfileResponse(response?.data);
+  const orgInfos = Array.isArray(detail?.orgInfos) ? detail.orgInfos : [];
+
+  return orgInfos.map((orgInfo) => ({
+    orgId: valueToText(orgInfo?.orgId),
+    createdAt: orgInfo?.createdAt ?? null,
+  }));
+}
+
+// Ngay 1 user gia nhap 1 org cu the (vd 1 team ORG_MANAGE) - null neu khong tim thay/khong xac
+// dinh duoc (goi noi nen UI phai tu quyet dinh cach xu ly khi null: vd canh bao "khong xac dinh
+// duoc ngay tham gia" thay vi loai het doanh so cua nguoi do).
+export async function fetchUserOrgJoinDate(userId, orgId) {
+  const targetOrgId = valueToText(orgId);
+
+  if (!targetOrgId) return null;
+
+  const orgInfos = await fetchUserOrgInfos(userId);
+  const match = orgInfos.find((orgInfo) => orgInfo.orgId === targetOrgId);
+
+  return match?.createdAt ?? null;
 }

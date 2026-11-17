@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
-import { IconBell, IconDataQuality, IconHome, IconOrgChart, IconReconciliation, IconSettings } from './SidebarIcons.jsx';
+import {
+  IconBell,
+  IconDataQuality,
+  IconHome,
+  IconOrgChart,
+  IconReconciliation,
+  IconSettings,
+} from './SidebarIcons.jsx';
 
 const menuItems = [
   { label: 'Trang chủ', icon: <IconHome />, path: '/dashboard' },
@@ -21,7 +28,10 @@ const menuItems = [
     icon: <IconReconciliation />,
     hasChildren: true,
     matchPaths: ['/reconciliations'],
-    children: [{ label: 'Lịch sử đối soát', path: '/reconciliations/history' }],
+    children: [
+      { label: 'Danh sách đối soát', path: '/reconciliations/list' },
+      { label: 'Lịch sử đối soát', path: '/reconciliations/history' },
+    ],
   },
   { label: 'Kiểm tra dữ liệu', icon: <IconDataQuality />, path: '/data-quality' },
   { label: 'Cài đặt', icon: <IconSettings />, path: '/settings' },
@@ -73,9 +83,7 @@ function Sidebar() {
           <strong>TNEX Partner</strong>
           <span>Admin Console</span>
         </div>
-        <button className="sidebar-collapse" type="button" aria-label="Thu gọn sidebar">
-          
-        </button>
+        <button className="sidebar-collapse" type="button" aria-label="Thu gọn sidebar"></button>
       </div>
 
       <nav className="sidebar-nav" aria-label="Dashboard navigation">

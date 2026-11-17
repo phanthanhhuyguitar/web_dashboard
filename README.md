@@ -1,6 +1,8 @@
 # TNEX Partner Admin Dashboard
 
-Du an dashboard React + Vite, kem Node server noi bo de dong bo du lieu user, loan tu API TNEX va luu vao SQLite (`output/db/tnex-sync.db`). Toan bo man hinh (dashboard, segment, data quality, tro ly AI...) doc du lieu tu SQLite - khong con doc truc tiep tu file `.txt`/`.json` trong `output/`.
+Du an dashboard React + Vite cho TNEX Partner, kem mot Node server noi bo (`server/*.cjs`, chi phuc vu may dang dev, khong deploy production) de dong bo du lieu user/loan tu API TNEX.
+
+Nguon du lieu mac dinh cua server local la cac file `.txt`/`.json` trong `output/`. SQLite (`output/db/tnex-sync.db`) la **tuy chon**, chi duoc dung khi bat bien `USE_SQLITE_STORE=true` trong `.env.local` - mac dinh tat, khong anh huong luong doc/ghi chinh.
 
 ## Yeu cau moi truong
 
@@ -42,7 +44,7 @@ Tren Windows PowerShell co the dung:
 Copy-Item .env.example .env
 ```
 
-4. Kiem tra/cap nhat cac bien trong `.env` - xem day du danh sach va ghi chu tung bien tai `.env.example` (endpoint API TNEX, timeout, va cac bien tuy chon cho server local nhu `USE_SQLITE_STORE`, `GEMINI_API_KEY`).
+4. Kiem tra/cap nhat cac bien trong `.env` - xem day du danh sach va ghi chu tung bien tai `.env.example` (endpoint API TNEX, timeout). Cac bien danh cho server local (`USE_SQLITE_STORE`, `GEMINI_API_KEY`...) nen dat trong `.env.local` (khong commit len git) theo huong dan trong `.env.example`.
 
 5. Chay dev server:
 
@@ -85,12 +87,22 @@ SYNC_USERS_PORT=4174
 npm run build
 ```
 
-Lenh build se chay kiem tra encoding truoc, sau do build Vite vao thu muc `dist/`.
+Lenh build se chay kiem tra encoding truoc, sau do build Vite vao thu muc `dist/`. Production la mot SPA tinh (khong co Node runtime o server production) - `server/*.cjs` chi phuc vu dev local.
 
 ## Preview ban build
 
 ```bash
 npm run preview
+```
+
+## Kiem tra chat luong code
+
+```bash
+npm run lint          # Kiem tra eslint
+npm run lint:fix      # Tu sua loi eslint co the sua duoc
+npm run format        # Format code voi prettier
+npm run format:check  # Kiem tra format, khong sua
+npm run test          # Chay test voi vitest
 ```
 
 ## Cac script hay dung
@@ -99,19 +111,16 @@ npm run preview
 npm run dev                 # Chay ung dung local
 npm run sync-users-server   # Chay Node sync server rieng
 npm run check:encoding      # Kiem tra encoding file source
+npm run migrate-to-sqlite   # Migrate du lieu tu file .txt/.json sang SQLite (chi can khi dung USE_SQLITE_STORE)
 npm run build               # Build production
 npm run preview             # Preview dist sau build
 ```
 
 ## Du lieu output
 
-Nguon du lieu chinh cua toan bo ung dung la SQLite tai `output/db/tnex-sync.db` - tu tao khi chay dong bo lan dau, khong commit len git (xem `.gitignore`).
+Nguon du lieu mac dinh cua server local la cac file `.txt`/`.json` trong `output/loans/` va `output/users/` (ghi boi cac job dong bo khi dang nhap/chay sync tren giao dien). Sau khi clone repo moi, thu muc `output/` se rong (chi con `.gitkeep`) - can dang nhap va chay cac chuc nang dong bo tren giao dien (hoac `npm run sync-users-server` de debug rieng) truoc khi xem cac man hinh phu thuoc du lieu. Thu muc nay khong commit len git vi chua du lieu that (SDT, ten, so tien vay...) cua khach hang - chi ton tai o may dang chay sync.
 
-Thu muc `output/loans/` va `output/users/` van duoc cac job dong bo ghi kem file `.txt` (log, snapshot, danh sach loi...) de phuc vu debug/audit, nhung **ung dung khong doc lai cac file nay** - moi man hinh deu lay du lieu qua SQLite. Cac file nay cung khong commit len git vi chua du lieu that (SDT, ten, so tien vay...) cua khach hang - chi ton tai o may dang chay sync.
-
-Sau khi clone repo moi, thu muc `output/` se rong (chi con `.gitkeep`) - can dang nhap va chay cac chuc nang dong bo tren giao dien (hoac `npm run sync-users-server` de debug rieng) truoc khi xem cac man hinh phu thuoc du lieu.
-
-Bien `USE_SQLITE_STORE` trong `.env.local` (mac dinh tat, khong bat buoc) chi dieu khien viec co ghi kem vao 2 bang SQLite cu (`users`, `loans` - giu de rollback) hay khong; khong anh huong den luong doc du lieu chinh cua ung dung.
+Bien `USE_SQLITE_STORE=true` trong `.env.local` (mac dinh tat, khong bat buoc) chuyen server local sang doc/ghi qua SQLite (`output/db/tnex-sync.db`) thay vi file `.txt`/`.json`. Dung `npm run migrate-to-sqlite` de chuyen du lieu da co sang SQLite khi can.
 
 ## Ghi chu dang nhap
 
@@ -126,3 +135,15 @@ Form dang nhap goi API login voi payload gom:
 ```
 
 Token dang nhap duoc luu trong browser storage de cac request tiep theo goi API TNEX Partner.
+
+## Scripts tien ich goi API thuc (thu muc `scripts/`)
+
+Ngoai ung dung chinh, thu muc `scripts/` chua cac script Node doc lap (chay bang `node scripts/<ten-script>/run.js`), dung de tra cuu/doi soat/xuat file mot lan ma khong can mo giao dien - vi du `export-reconciliation-file` (xuat file doi soat .xlsx cho 1 CTV), `export-teamlead-reconciliation-file` (xuat file doi soat cho Team Lead gom ca doanh so ca nhan va team), `find-ctv-by-name`, `find-teamlead-both-revenue`, `sale-code-lookup`, `change-result-userids`...
+
+Cac script nay goi thang API TNEX Partner thuc (khong qua server local), nen can:
+
+1. Mo file `run.js` tuong ung, dan Bearer token (lay tu DevTools cua trang partner-admin da dang nhap, F12 -> Network -> copy header `Authorization`, bo chu `Bearer `) vao bien `TOKEN` o dau file.
+2. Chinh cac bien cau hinh khac ngay duoi `TOKEN` (ma sale, thang/nam...) theo nhu cau.
+3. Chay: `node scripts/<ten-script>/run.js`
+
+**Luu y quan trong:** token dang nhap het han sau vai gio, va **tuyet doi khong commit file `run.js` da dan token thuc len git** - cac script nay chi doc du lieu (khong ghi gi len he thong thuc), nhung token la thong tin dang nhap nhay cam.

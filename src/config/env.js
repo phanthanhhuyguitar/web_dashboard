@@ -21,10 +21,7 @@ export const ENV = {
   SEARCH_USERS_ENDPOINT: getEnv('VITE_SEARCH_USERS_ENDPOINT', '/digital-sale-admin/api/v1/admin/search-users'),
   ROLES_ENDPOINT: getEnv('VITE_ROLES_ENDPOINT', '/digital-sale-admin/api/v1/admin/roles'),
   ORG_UNITS_ENDPOINT: getEnv('VITE_ORG_UNITS_ENDPOINT', '/digital-sale-admin/api/v1/admin/org-units'),
-  ORG_UNIT_USERS_ENDPOINT: getEnv(
-    'VITE_ORG_UNIT_USERS_ENDPOINT',
-    '/digital-sale-admin/api/v1/admin/org-units/users'
-  ),
+  ORG_UNIT_USERS_ENDPOINT: getEnv('VITE_ORG_UNIT_USERS_ENDPOINT', '/digital-sale-admin/api/v1/admin/org-units/users'),
   REMOVE_ORG_UNIT_USER_ENDPOINT: getEnv(
     'VITE_REMOVE_ORG_UNIT_USER_ENDPOINT',
     '/digital-sale-admin/api/v1/admin/org-units/users/remove'
@@ -46,5 +43,10 @@ export const ENV = {
     '/digital-sale-admin/api/v1/admin/reconciliations/search-history'
   ),
   USER_DETAIL_ENDPOINT: getEnv('VITE_USER_DETAIL_ENDPOINT', '/digital-sale-admin/api/v1/admin/users/profile'),
+  SEARCH_DISBURSED_ENDPOINT: getEnv(
+    'VITE_SEARCH_DISBURSED_ENDPOINT',
+    '/digital-sale-admin/api/v1/admin/search-disbursed'
+  ),
+  RECONCILIATION_JOB_ENDPOINT: getEnv('VITE_RECONCILIATION_JOB_ENDPOINT', '/digital-sale-admin/api/v1/admin/jobs'),
   API_TIMEOUT: toNumber(getEnv('VITE_API_TIMEOUT', '30000'), 30000),
 };

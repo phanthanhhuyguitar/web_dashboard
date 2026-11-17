@@ -11,21 +11,24 @@ const LINK_FONT = {
   underline: true,
 };
 
-function buildFileName(fileNameSuffix) {
+function buildTimestamp() {
   const now = new Date();
-  const stamp = [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, '0'),
-    String(now.getDate()).padStart(2, '0'),
-  ].join('') + '-' + [
-    String(now.getHours()).padStart(2, '0'),
-    String(now.getMinutes()).padStart(2, '0'),
-    String(now.getSeconds()).padStart(2, '0'),
-  ].join('');
 
+  return (
+    [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('') +
+    '-' +
+    [
+      String(now.getHours()).padStart(2, '0'),
+      String(now.getMinutes()).padStart(2, '0'),
+      String(now.getSeconds()).padStart(2, '0'),
+    ].join('')
+  );
+}
+
+function buildFileName(fileNameSuffix, prefix = 'lich-su-doi-soat') {
   const suffix = fileNameSuffix ? `_${fileNameSuffix}` : '';
 
-  return `lich-su-doi-soat${suffix}_${stamp}.xlsx`;
+  return `${prefix}${suffix}_${buildTimestamp()}.xlsx`;
 }
 
 function downloadBlob(blob, fileName) {
@@ -127,4 +130,67 @@ export async function exportReconciliationHistoryToExcel({
   const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
   downloadBlob(blob, buildFileName(fileNameSuffix));
+}
+
+const REVIEW_STATUS_LABELS = {
+  PENDING: 'Chờ xác nhận',
+  APPROVE: 'Approve',
+  REJECT: 'Reject',
+};
+
+function getReviewStatusLabel(status) {
+  return REVIEW_STATUS_LABELS[status] || status || '--';
+}
+
+export async function exportReconciliationLoansToExcel({ items, fileNameSuffix }) {
+  const { default: ExcelJS } = await import('exceljs');
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet('Danh sách đối soát');
+
+  sheet.columns = [
+    { header: 'Mã Sale', key: 'saleId', width: 14, style: { numFmt: '@' } },
+    { header: 'Tên Sale', key: 'saleName', width: 24 },
+    { header: 'Mã đơn vay', key: 'loanId', width: 16, style: { numFmt: '@' } },
+    { header: 'Mã sản phẩm', key: 'productCode', width: 14, style: { numFmt: '@' } },
+    { header: 'Tên sản phẩm', key: 'productName', width: 18 },
+    { header: 'Tên khách hàng', key: 'customerName', width: 24 },
+    { header: 'Số điện thoại', key: 'phone', width: 16, style: { numFmt: '@' } },
+    { header: 'Số tiền', key: 'amount', width: 16 },
+    { header: 'Trạng thái', key: 'loanStatus', width: 14 },
+    { header: 'Hoa hồng', key: 'commission', width: 14 },
+    { header: 'Trạng thái xác nhận', key: 'reviewStatus', width: 18 },
+    { header: 'Ghi chú phản hồi', key: 'note', width: 40 },
+  ];
+
+  const headerRow = sheet.getRow(1);
+
+  headerRow.height = 20;
+  headerRow.font = { bold: true };
+  headerRow.eachCell((cell) => {
+    cell.fill = HEADER_FILL;
+  });
+
+  items.forEach((item) => {
+    const row = sheet.addRow({
+      saleId: item.saleId || '',
+      saleName: item.saleName || '',
+      loanId: item.loanId || '',
+      productCode: item.productCode || '',
+      productName: item.productName || '',
+      customerName: item.customerName || '',
+      phone: item.phone || '',
+      amount: item.amount || 0,
+      loanStatus: item.loanStatus || '--',
+      commission: item.commission || 0,
+      reviewStatus: getReviewStatusLabel(item.reviewStatus),
+      note: [item.note, item.noteHighlight].filter(Boolean).join(' | '),
+    });
+
+    row.height = 18;
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  downloadBlob(blob, buildFileName(fileNameSuffix, 'danh-sach-doi-soat'));
 }
