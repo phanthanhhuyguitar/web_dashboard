@@ -147,3 +147,6 @@ Cac script nay goi thang API TNEX Partner thuc (khong qua server local), nen can
 3. Chay: `node scripts/<ten-script>/run.js`
 
 **Luu y quan trong:** token dang nhap het han sau vai gio, va **tuyet doi khong commit file `run.js` da dan token thuc len git** - cac script nay chi doc du lieu (khong ghi gi len he thong thuc), nhung token la thong tin dang nhap nhay cam.
+
+tnex xin 1 tuần để 
+nhờ anh minh ngòi lại với tnex để xem mipcap đã ok chưa

@@ -1,0 +1,22 @@
+﻿HƯỚNG DẪN XUẤT FILE ĐỐI SOÁT
+
+1. Click chuột phải vào file "xuat-doi-soat.ps1" -> chọn "Run with PowerShell"
+
+   (Nếu báo lỗi "không cho chạy script": mở PowerShell, gõ lệnh sau rồi Enter,
+    chỉ cần làm 1 lần duy nhất:
+    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+    Sau đó làm lại bước 1.)
+
+2. Nhập lần lượt rồi bấm Enter sau mỗi dòng:
+   - Số điện thoại
+   - Mật khẩu (gõ không hiện chữ, bình thường)
+   - Mã OTP (không có thì để trống)
+   - Tháng/năm cần xuất, ví dụ: 10/2026
+   - Mã sale lọc (để trống = lấy tất cả)
+   - Trạng thái lọc (để trống = lấy tất cả)
+
+3. Chờ chương trình chạy xong (có thể mất vài phút).
+
+4. File kết quả (.xlsx hoặc .csv) nằm ngay trong thư mục này. Bấm Enter để đóng.
+
+Lưu ý: mỗi lần chạy phải đăng nhập lại, không lưu mật khẩu.
